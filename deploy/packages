@@ -1,0 +1,3 @@
+# Debian packages the update installs when missing, one per line.
+# sudo: the setup program's commands that run as the agent's user.
+sudo

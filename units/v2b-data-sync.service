@@ -1,0 +1,8 @@
+[Unit]
+Description=V2B copy what the owner teaches V2B, and the install log, to the owner's repository
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/v2b/current/bin/v2b data-sync

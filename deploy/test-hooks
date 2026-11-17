@@ -1,0 +1,174 @@
+#!/bin/bash
+# Unit test for the managed hooks in claude/managed-settings.json: each event's command, taken
+# from the file, is run on a sample of the documented stdin with the log directory moved to a
+# temporary one, and the line it writes is checked field by field. No network, no root.
+set -euo pipefail
+
+src=$(cd "$(dirname "$0")/.." && pwd -P)
+settings="$src/claude/managed-settings.json"
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+failures=0
+fail() { echo "fail: $*"; failures=$((failures + 1)); }
+pass() { echo "PASS: $*"; }
+
+jq -e . "$settings" >/dev/null || { echo "fail: $settings is not valid JSON"; exit 1; }
+
+# Sets cmd to the event's command, with /home/v2b-agent/use-log pointed at $tmp/log. Exactly one
+# command per event.
+command_for() {
+  local n
+  n=$(jq -r --arg e "$1" '[.hooks[$e][]?.hooks[]? | select(.type == "command")] | length' "$settings")
+  [ "$n" = 1 ] || { fail "$1: $n commands, expected 1"; return 1; }
+  cmd=$(jq -r --arg e "$1" '.hooks[$e][0].hooks[0].command' "$settings" |
+    sed "s#/home/v2b-agent/use-log#$tmp/log#g")
+}
+
+# run EVENT FILE STDIN [V2B_RUN]: runs the command, sets line to the one new line of FILE.
+run() {
+  local before after rc=0
+  line=
+  command_for "$1" || return 1
+  mkdir -p "$tmp/log"; touch "$tmp/log/$2"
+  before=$(wc -l < "$tmp/log/$2")
+  if [ $# -ge 4 ]; then
+    printf '%s' "$3" | env V2B_RUN="$4" sh -c "$cmd" 2> "$tmp/err" || rc=$?
+  else
+    printf '%s' "$3" | env -u V2B_RUN sh -c "$cmd" 2> "$tmp/err" || rc=$?
+  fi
+  [ $rc = 0 ] || { fail "$1: exit $rc"; return 1; }
+  # The command ends in '|| true', so a jq error shows only on stderr and as a missing line.
+  [ ! -s "$tmp/err" ] || { fail "$1: stderr: $(cat "$tmp/err")"; return 1; }
+  after=$(wc -l < "$tmp/log/$2")
+  [ $((after - before)) = 1 ] || { fail "$1: $((after - before)) lines written, expected 1"; return 1; }
+  line=$(tail -n 1 "$tmp/log/$2")
+}
+
+# check NAME LINE KEYS FILTER...: LINE has exactly KEYS (sorted, comma-joined), a parseable t,
+# and each jq FILTER is true on it.
+check() {
+  local name=$1 line=$2 keys=$3 got f ok=1
+  shift 3
+  jq -e . <<<"$line" >/dev/null 2>&1 || { fail "$name: not JSON: $line"; return; }
+  got=$(jq -r 'keys | join(",")' <<<"$line")
+  [ "$got" = "$keys" ] || { fail "$name: keys $got, expected $keys"; ok=0; }
+  jq -e '.t | type == "string" and (fromdateiso8601 | type == "number")' <<<"$line" >/dev/null 2>&1 ||
+    { fail "$name: t not parseable: $(jq -c .t <<<"$line")"; ok=0; }
+  for f in "$@"; do
+    jq -e "$f" <<<"$line" >/dev/null 2>&1 || { fail "$name: $f"; ok=0; }
+  done
+  [ $ok = 0 ] || pass "$name"
+}
+
+common='"session_id": "abc123", "transcript_path": "/home/v2b-agent/.claude/projects/x/abc123.jsonl",
+  "cwd": "/home/v2b-agent/workspace", "permission_mode": "default",
+  "prompt_id": "550e8400-e29b-41d4-a716-446655440000"'
+
+# UserPromptSubmit, V2B_RUN set.
+in=$(printf '{%s, "hook_event_name": "UserPromptSubmit", "prompt": "Šta je rečeno o ugovoru?\\nnovi red"}' "$common")
+run UserPromptSubmit prompt.jsonl "$in" nightly &&
+  check "UserPromptSubmit" "$line" "prompt,prompt_id,run,session_id,t" \
+    '.run == "nightly"' '.session_id == "abc123"' \
+    '.prompt_id == "550e8400-e29b-41d4-a716-446655440000"' \
+    '.prompt == "Šta je rečeno o ugovoru?\nnovi red"'
+
+# UserPromptSubmit without prompt_id (documented as absent until the first user input), unset run.
+in='{"session_id": "abc123", "cwd": "/w", "hook_event_name": "UserPromptSubmit", "prompt": "hi"}'
+run UserPromptSubmit prompt.jsonl "$in" &&
+  check "UserPromptSubmit without prompt_id" "$line" "prompt,prompt_id,run,session_id,t" \
+    '.run == "session"' '.prompt_id == null' '.prompt == "hi"'
+
+# PostToolUse, a short tool_response, V2B_RUN unset.
+in=$(printf '{%s, "hook_event_name": "PostToolUse", "tool_name": "Write",
+  "tool_input": {"file_path": "/path/to/file.txt", "content": "file content"},
+  "tool_response": {"filePath": "/path/to/file.txt", "type": "create"},
+  "tool_use_id": "toolu_01ABC123", "duration_ms": 12}' "$common")
+run PostToolUse tool.jsonl "$in" &&
+  check "PostToolUse short" "$line" "prompt_id,run,session_id,t,tool_input,tool_name,tool_response,tool_use_id" \
+    '.run == "session"' '.session_id == "abc123"' \
+    '.prompt_id == "550e8400-e29b-41d4-a716-446655440000"' \
+    '.tool_use_id == "toolu_01ABC123"' '.tool_name == "Write"' \
+    '.tool_input == {"file_path": "/path/to/file.txt", "content": "file content"}' \
+    '.tool_response == {"filePath": "/path/to/file.txt", "type": "create"}'
+
+# PostToolUse at exactly the cap: kept as JSON. tojson of {"o":"<x>"} is 8 characters plus x.
+x=$(head -c 8184 /dev/zero | tr '\0' a)
+in=$(jq -cn --arg x "$x" '{session_id: "s", prompt_id: "p", tool_use_id: "u", tool_name: "Read",
+  tool_input: {file_path: "/f"}, tool_response: {o: $x}}')
+run PostToolUse tool.jsonl "$in" nightly &&
+  check "PostToolUse at the cap" "$line" "prompt_id,run,session_id,t,tool_input,tool_name,tool_response,tool_use_id" \
+    '.run == "nightly"' '(.tool_response | tojson | length) == 8192' \
+    '.tool_response.o | length == 8184'
+
+# PostToolUse one character over the cap: cut.
+in=$(jq -cn --arg x "${x}a" '{session_id: "s", prompt_id: "p", tool_use_id: "u", tool_name: "Read",
+  tool_input: {file_path: "/f"}, tool_response: {o: $x}}')
+run PostToolUse tool.jsonl "$in" nightly &&
+  check "PostToolUse one character over the cap" "$line" "prompt_id,run,session_id,t,tool_input,tool_name,tool_response,tool_use_id,truncated" \
+    '.truncated == true' '.tool_response | type == "string" and length == 8192'
+
+# PostToolUse in Cyrillic, under the cap in characters though over it in bytes: kept as JSON,
+# not marked truncated.
+cyr=$(for i in $(seq 1000); do printf 'ћирилица'; done)
+in=$(jq -cn --arg x "$cyr" '{session_id: "s", prompt_id: "p", tool_use_id: "u", tool_name: "Read",
+  tool_input: {file_path: "/f"}, tool_response: {o: $x}}')
+run PostToolUse tool.jsonl "$in" nightly &&
+  check "PostToolUse Cyrillic under the cap" "$line" "prompt_id,run,session_id,t,tool_input,tool_name,tool_response,tool_use_id" \
+    '.tool_response.o | length == 8000' '(.tool_response | tojson | utf8bytelength) > 8192'
+
+# PostToolUse well over the cap: the first 8192 characters of the serialisation, as a string.
+big=$(head -c 20000 /dev/zero | tr '\0' b)
+in=$(jq -cn --arg x "$big" '{session_id: "s", prompt_id: "p", tool_use_id: "u", tool_name: "Bash",
+  tool_input: {command: "cat big"}, tool_response: {stdout: $x, stderr: "", interrupted: false}}')
+want=$(jq -c '.tool_response | tojson | .[0:8192]' <<<"$in")
+run PostToolUse tool.jsonl "$in" nightly &&
+  check "PostToolUse over the cap" "$line" "prompt_id,run,session_id,t,tool_input,tool_name,tool_response,tool_use_id,truncated" \
+    '.truncated == true' '.tool_response | type == "string"' '.tool_response | length == 8192' \
+    ".tool_response == $want" '.tool_input == {"command": "cat big"}' '.tool_name == "Bash"'
+
+# PostToolUseFailure, V2B_RUN set.
+in=$(printf '{%s, "hook_event_name": "PostToolUseFailure", "tool_name": "Bash",
+  "tool_input": {"command": "npm test", "description": "Run test suite"},
+  "tool_use_id": "toolu_01ABC123", "error": "Exit code 1\\nError: Cannot find module", "is_interrupt": false,
+  "duration_ms": 4187}' "$common")
+run PostToolUseFailure tool.jsonl "$in" nightly &&
+  check "PostToolUseFailure" "$line" "error,prompt_id,run,session_id,t,tool_input,tool_name,tool_use_id" \
+    '.run == "nightly"' '.tool_use_id == "toolu_01ABC123"' '.tool_name == "Bash"' \
+    '.tool_input == {"command": "npm test", "description": "Run test suite"}' \
+    '.error == "Exit code 1\nError: Cannot find module"' \
+    '.prompt_id == "550e8400-e29b-41d4-a716-446655440000"'
+
+# Stop, V2B_RUN unset.
+in=$(printf '{%s, "hook_event_name": "Stop", "stop_hook_active": false,
+  "last_assistant_message": "Ugovor je potpisan u utorak.", "background_tasks": [], "session_crons": []}' "$common")
+run Stop stop.jsonl "$in" &&
+  check "Stop" "$line" "cwd,last_assistant_message,prompt_id,run,session_id,t,transcript_path" \
+    '.run == "session"' '.session_id == "abc123"' '.cwd == "/home/v2b-agent/workspace"' \
+    '.transcript_path == "/home/v2b-agent/.claude/projects/x/abc123.jsonl"' \
+    '.prompt_id == "550e8400-e29b-41d4-a716-446655440000"' \
+    '.last_assistant_message == "Ugovor je potpisan u utorak."'
+
+# Stop, V2B_RUN set.
+run Stop stop.jsonl "$in" nightly &&
+  check "Stop with V2B_RUN" "$line" "cwd,last_assistant_message,prompt_id,run,session_id,t,transcript_path" \
+    '.run == "nightly"'
+
+# Each file holds only the lines written above.
+[ "$(wc -l < "$tmp/log/prompt.jsonl" | tr -d ' ')" = 2 ] || fail "prompt.jsonl line count"
+[ "$(wc -l < "$tmp/log/tool.jsonl" | tr -d " ")" = 6 ] || fail "tool.jsonl line count"
+[ "$(wc -l < "$tmp/log/stop.jsonl" | tr -d ' ')" = 2 ] || fail "stop.jsonl line count"
+
+# Input jq cannot parse writes nothing and still exits 0: a hook never breaks the turn.
+for e in UserPromptSubmit PostToolUse PostToolUseFailure Stop; do
+  command_for $e || continue
+  if printf 'not json' | sh -c "$cmd" 2>/dev/null; then pass "$e: bad input exits 0"
+  else fail "$e: bad input exited non-zero"; fi
+done
+[ "$(cat "$tmp/log"/*.jsonl | wc -l | tr -d " ")" = 10 ] || fail "bad input wrote a line"
+
+if [ "$failures" -gt 0 ]; then
+  echo "$failures failure(s)"
+  exit 1
+fi
+echo "all hook tests passed"

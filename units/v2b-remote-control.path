@@ -1,0 +1,13 @@
+[Unit]
+Description=V2B Remote Control: start the server when Claude's sign-in exists
+# The service is skipped while /home/v2b-agent/.claude/.credentials.json is missing (its
+# ConditionPathExists), and Restart= retries only a process that exited, never a skipped start.
+# This unit watches for the file and starts the service when it is there, so a sign-in made
+# outside setup, or a file absent at the instant of a restart, does not leave the owner's route to the agent down.
+
+[Path]
+PathExists=/home/v2b-agent/.claude/.credentials.json
+Unit=v2b-remote-control.service
+
+[Install]
+WantedBy=multi-user.target

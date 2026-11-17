@@ -1,0 +1,1 @@
+What waits on the owner: read every open item in stack/ and look each one up afresh in the copy, clear what is settled, then look for what is new with owner_involvement and the conversations behind it. Report what waits, oldest first, with how long each has waited.

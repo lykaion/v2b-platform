@@ -1,0 +1,9 @@
+[Unit]
+Description=V2B take the newest signed release and install it
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=V2B_LOG_QUIET=1
+ExecStart=/usr/local/lib/v2b/current/bin/v2b server-update

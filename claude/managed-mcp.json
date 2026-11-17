@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "v2b": {
+      "type": "stdio",
+      "command": "/usr/local/lib/v2b/bin/v2b",
+      "args": ["mcp"]
+    }
+  }
+}

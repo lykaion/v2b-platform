@@ -1,0 +1,59 @@
+[Unit]
+Description=V2B archive: every key, each connection's passes and the database
+After=network-online.target v2b-archive.socket
+Wants=network-online.target
+Requires=v2b-archive.socket
+
+[Service]
+User=v2b-archive
+UMask=0027
+StateDirectory=v2b/archive
+StateDirectoryMode=0750
+ExecStart=/usr/local/lib/v2b/current/bin/v2b archive
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+# What this process, and anything it is made to run, may reach. It holds every platform's key
+# and parses strangers' messages, so a bug in a parser must not become the run of the machine.
+# The lines are the agent's unit's (v2b-remote-control.service), each kept or loosened by what
+# this service does: it reads /etc/v2b/archive, writes its database in its state directory,
+# serves the socket systemd passes it and speaks to the platforms over the network, which
+# stays open by ruling (it is how the service reads). It starts no program.
+# No privilege gained through setuid binaries or file capabilities; and, running as a user of
+# its own that binds no port below 1024 and changes no owner, it needs no capability at all.
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+RestrictSUIDSGID=yes
+# The whole file system read-only but what it writes: its state directory (StateDirectory
+# above is made writable by systemd itself, so no ReadWritePaths is needed; loosened from the
+# agent's unit, whose home is the one writable place). /etc/v2b/archive stays readable.
+ProtectSystem=strict
+PrivateTmp=yes
+# Added to the agent's lines: the agent's workspace and home are out of this service's reach
+# (the agent's unit needs /home/v2b-agent; this one never does).
+ProtectHome=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+# Not carried from the agent's lines: its InaccessiblePaths hides /etc/v2b and this service's
+# state directory, the two places this service exists to read and write. UMask stays 0027, looser
+# than the agent's 0077: the group is v2b-archive's own (useradd --user-group) and no other user
+# is put in it, so group-readable is v2b-archive-readable.
+# Loosened from the agent's lines by nothing: Internet sockets to the platforms, AF_UNIX for
+# the socket systemd passes and the clients' peer credentials, AF_NETLINK as the agent's unit
+# keeps it for the network libraries' interface and route queries.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target

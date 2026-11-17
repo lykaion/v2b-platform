@@ -1,0 +1,110 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -c '{t: (now | todate), run: ($ENV.V2B_RUN // \"session\"), session_id: (.session_id // null), prompt_id: (.prompt_id // null), prompt: (.prompt // null)}' >> /home/v2b-agent/use-log/prompt.jsonl || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -c '{t: (now | todate), run: ($ENV.V2B_RUN // \"session\"), session_id: (.session_id // null), prompt_id: (.prompt_id // null), tool_use_id: (.tool_use_id // null), tool_name: (.tool_name // null), tool_input} + ((.tool_response | tojson) as $s | if ($s | length) <= 8192 then {tool_response} else {tool_response: $s[0:8192], truncated: true} end)' >> /home/v2b-agent/use-log/tool.jsonl || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -c '{t: (now | todate), run: ($ENV.V2B_RUN // \"session\"), session_id: (.session_id // null), prompt_id: (.prompt_id // null), tool_use_id: (.tool_use_id // null), tool_name: (.tool_name // null), tool_input, error: (.error // null)}' >> /home/v2b-agent/use-log/tool.jsonl || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -c '{t: (now | todate), run: ($ENV.V2B_RUN // \"session\"), session_id: (.session_id // null), prompt_id: (.prompt_id // null), cwd: (.cwd // null), transcript_path: (.transcript_path // null), last_assistant_message: (.last_assistant_message // null)}' >> /home/v2b-agent/use-log/stop.jsonl || true"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ \"$V2B_RUN\" = summarize ] || /usr/local/lib/v2b/bin/v2b-now --start 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1",
+    "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "4"
+  },
+  "availableModels": ["opus"],
+  "enforceAvailableModels": true,
+  "permissions": {
+    "allow": [
+      "Bash(/usr/local/lib/v2b/bin/v2b-grep *)",
+      "Bash(v2b-grep *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-dates *)",
+      "Bash(v2b-dates *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-day *)",
+      "Bash(v2b-day *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-who *)",
+      "Bash(v2b-who *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-history *)",
+      "Bash(v2b-history *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-raw *)",
+      "Bash(v2b-raw *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-held *)",
+      "Bash(v2b-held *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-query *)",
+      "Bash(v2b-query *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-needs *)",
+      "Bash(v2b-needs *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-now *)",
+      "Bash(v2b-now *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-status *)",
+      "Bash(v2b-status *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b status *)",
+      "Bash(v2b status *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-sync *)",
+      "Bash(v2b-sync *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b sync *)",
+      "Bash(v2b sync *)",
+      "Bash(/usr/local/lib/v2b/bin/v2b-me)",
+      "Bash(v2b-me)",
+      "mcp__v2b__search_utterances",
+      "mcp__v2b__read_thread",
+      "mcp__v2b__read_place",
+      "mcp__v2b__utterances_by_person",
+      "mcp__v2b__owner_involvement",
+      "mcp__v2b__source_status",
+      "mcp__v2b__copy_now",
+      "Edit(./stack/**)",
+      "Edit(./reports/**)"
+    ]
+  },
+  "allowManagedMcpServersOnly": true,
+  "allowedMcpServers": [
+    { "serverCommand": ["/usr/local/lib/v2b/bin/v2b", "mcp"] }
+  ],
+  "allowManagedHooksOnly": true,
+  "autoMemoryEnabled": false
+}
