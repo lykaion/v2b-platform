@@ -16,8 +16,10 @@ RestartSec=5
 # What this process, and anything it is made to run, may reach. It holds every platform's key
 # and parses strangers' messages, so a bug in a parser must not become the run of the machine.
 # The lines are the agent's unit's (v2b-remote-control.service), each kept or loosened by what
-# this service does: it reads /etc/v2b/archive, writes its database in its state directory,
-# serves the socket systemd passes it and speaks to the platforms over the network, which
+# this service does: it keeps what is wanted in its database and each key in a file of its own,
+# both in its state directory, reads /etc/v2b/archive (the platforms' addresses on a test server,
+# and the settings files of a release before, once, when it moves them into the database), serves
+# the socket systemd passes it and speaks to the platforms over the network, which
 # stays open by ruling (it is how the service reads). It starts no program.
 # No privilege gained through setuid binaries or file capabilities; and, running as a user of
 # its own that binds no port below 1024 and changes no owner, it needs no capability at all.

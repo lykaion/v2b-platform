@@ -35,10 +35,10 @@ A reading is added and never changed: an edit or a deletion is a new reading, an
 platform answered is kept as received beside the typed row. Which business a server, channel or
 chat is about is a row of its own, so moving one writes no reading and moves no file.
 
-One service, `v2b-archive.service`, holds every key and runs every mirror. It reads
-`/etc/v2b/archive/` when it starts and again on `systemctl reload v2b-archive`, and holds
-one connection per file there, named by the file: `telegram`, `discord`, `granola`, `slack-<name>`,
-`mail-<name>`. Discord, Granola, mail, Slack and Telegram each get a pass every five minutes, the first a minute after the
+One service, `v2b-archive.service`, holds every key and runs every mirror. It reads what the owner
+wants from its database when it starts, again whenever it is given a new version, and on
+`systemctl reload v2b-archive`, and holds one connection per source wanted, named by the source:
+`telegram`, `discord`, `granola`, `slack-<name>`, `mail-<name>`. Discord, Granola, mail, Slack and Telegram each get a pass every five minutes, the first a minute after the
 service starts; one connection's pass never overlaps itself, and one that fails is noted in
 that connection's status and tried again five minutes later without stopping any other. If the
 service stops for any reason, systemd starts it again.
@@ -132,71 +132,63 @@ answer is one line of JSON: `status` gives every connection, whether it is copie
 when its last pass started and ended, whether it went well and what it copied; `sync` runs one
 connection's pass now, or waits for the one already running, and says what it stored per
 place, or that it was not copied yet; `list` shows what one connection could copy, without copying anything: the source and
-each channel, group, folder or server in it, and whether it is chosen; `reload` reads the
-settings again. Each request is answered only to the callers allowed it: `list`, `reload` and
+each channel, group, folder or server in it, and whether it is chosen; `reload` reads what is
+wanted and the keys again; `give` takes what is wanted, whole, as the next version of the one
+held, refuses one made from an older version with the one held, and changes nothing when given
+the same again; `wanted_status` answers what is wanted with where every part of it stands. Each
+request is answered only to the callers allowed it: `list`, `reload`, `give` and
 the owner's word as a whole to `root` alone, the agent's reads and writes to the assistant, and
 any other caller is refused in one sentence naming the request. No answer holds a key. Each
 request is one line in the journal, with the caller's user id and whether it went well, never
 what was asked or answered.
 
-Their settings are files in `/etc/v2b/archive/`. The archive service runs as a user of its own, and
-the assistant cannot read their keys: only the archive service and `root` can open that folder, and
-every install from this repository puts its owner and permissions back, along with those of
-the archive service's state, where the database is. One `KEY=value` per line, no quotes, `#` for
-comments:
+What the owner wants is one document in the archive service's database, with its version: each
+source (a Slack workspace, a mailbox, the Telegram account, a Discord bot, the Granola account),
+the places ticked in each, and the rest of what he sets. Which business a source or place is about
+is a link in the database, never a part of it. A source's key is not in the database, which a
+query and a copy of it read: each is one line in a file of its own,
+`/var/lib/v2b/archive/keys/<source>.key`, the archive service's user's alone (mode 0600, in a
+directory of 0700). The archive service runs as a user of its own, and the assistant cannot reach
+its state directory, where the keys and the database are: its unit makes that directory
+inaccessible.
 
-- `slack-<name>.env`, one per Slack workspace, named by its team id in lower case:
-  `SLACK_USER_TOKEN`, the owner's own key (`xoxp-…`), and `CHANNELS`, a comma list of the
-  conversation ids ticked (public and private channels, group direct messages and direct
-  messages); without it nothing is copied. The key asks only read scopes, and no bot is made or
-  used. The workspace's business is a link in the database, made by `assign`, not a line here.
-- `granola.env`: `GRANOLA_API_KEY`, the owner's key (`grn_…`), read by `v2b-archive` alone.
-- `granola-folders.env`: one `<folder id>=` per folder ticked, and `unfiled=` for the meetings in
-  no folder; an account with no folders is copied whole and needs no line. The account's business
-  is a link in the database, made by `assign`, not a line here.
-- `discord.env`: `DISCORD_BOT_TOKEN`.
-- `discord-guilds.env`: one `<server id>=` per server ticked; nothing else is copied. The
-  server's business is a link in the database, never a line here.
-- `mail-<name>.env`, one per mailbox: `MAIL_HOST`, `MAIL_USER` and `MAIL_PASSWORD`; optionally
-  `MAIL_PORT` (993 by default), `MAIL_TLS` (`tls`, TLS from the start, by default, or
-  `starttls`) and `FOLDERS`, a comma list of folder names. The mailbox's business is a link in
-  the database, never a line here.
-- `telegram.env`: `TELEGRAM_SESSION`, the owner's Telegram sign-in as one base64 line (gotd's
-  session), read by `v2b-archive` alone. Any other key in it is not read.
-- `platform-addresses.env`, on a test server only: `slack`, `discord` and `granola`, each the
-  address of a stand-in for that platform, read in place of the platform's own. It is read once,
-  when the service starts, and only when `root` owns it and no one else can write it; a file
-  refused is said in the journal and the status, and those three platforms copy nothing until it
-  is put right. Every face of the status says which platforms a stand-in serves. The reads
-  allowed for each platform are the same whatever its address.
-- `telegram-chats.env`: one `<chat id>=` per chat ticked; nothing else is copied. A chat's
-  business is a link in the database; a line holds one only when it was given before the chat was
-  copied, and the next pass sets the link.
+A server installed before the database held what is wanted kept it in settings files in
+`/etc/v2b/archive/`. At its first start on a release that reads the database, the archive service
+reads them once into what is wanted and the key files, and names each file it moved and each it
+could not read. The update, as `root`, then removes the moved ones at its next run; one that did
+not read is left where it is and named once in the install log. After the move no settings file is
+read again.
 
-Only the service opens
-the database, holding its lock in `/var/lib/v2b/archive/`, and it writes one pass at a time.
+`/etc/v2b/archive/platform-addresses.env` stays, on a test server only: `slack`, `discord` and
+`granola`, each the address of a stand-in for that platform, read in place of the platform's own.
+It is read once, when the service starts, and only when `root` owns it and no one else can write
+it; a file refused is said in the journal and the status, and those three platforms copy nothing
+until it is put right. Every face of the status says which platforms a stand-in serves. The reads
+allowed for each platform are the same whatever its address.
 
-`sudo /usr/local/lib/v2b/bin/v2b connect` writes them for you, and running it again replaces
-a key or a business. Once it has written a file it asks the service, over its socket, to read
-the settings again and, where a pass follows, to run that pass, and prints what the pass
+Only the service opens the database, holding its lock in `/var/lib/v2b/archive/`, and it writes
+one pass at a time.
+
+`sudo /usr/local/lib/v2b/bin/v2b connect` keeps a key for you, and running it again replaces it.
+It writes the key's file, gives what is wanted with the source in it, asks the service over its
+socket to read the keys again and, where a pass follows, to run that pass, and prints what the pass
 copied; no service is restarted. `slack <name>` sets a Slack workspace's key, the conversations
-ticked afterwards with `v2b choose slack <name> <id,...>`, which runs a pass; `slack-workspace <team id>
-<business>` links a workspace to a business;
-`telegram` sets the Telegram sign-in and runs a pass; `discord` sets the Discord key and runs a pass;
-`granola` sets the Granola key and runs a pass, the folders ticked afterwards with `v2b choose granola <folder>`, one folder (or `unfiled`) at a time; `granola-source account <business>` assigns the account;
-`telegram-group <chat id> <business>` assigns a chat; `discord-server <server id> <business>`
-assigns a server and runs a pass; `mail <name> <user> <host> <port>` sets a mailbox's password,
-its folders chosen afterwards with `v2b choose mail <name> <folder,...>`; `mail-box <name> <business>`
-links a mailbox to a business. Port 143 uses `starttls`; a password
-with a character other than ASCII is refused, since IMAP's sign-in cannot carry it. It asks for the key
-or password hidden at the terminal, or reads it from its standard input when a script feeds it;
-a key is never typed on the command line. Typed by hand, run it inside the `ssh` session rather
-than as the command `ssh` is given, so the terminal hides the key as you type it.
+ticked afterwards with `v2b choose slack <name> <id,...>`, which runs a pass; `telegram` sets the
+Telegram sign-in and runs a pass; `discord` sets the Discord key and runs a pass; `granola` sets
+the Granola key and runs a pass, the folders ticked afterwards with `v2b choose granola <folder>`,
+one folder (or `unfiled`) at a time; `mail <name> <user> <host> <port>` sets a mailbox's password,
+its folders chosen afterwards with `v2b choose mail <name> <folder,...>`. Port 143 uses
+STARTTLS; a password with a character other than ASCII is refused, since IMAP's sign-in cannot
+carry it. `v2b connect forget` removes a key the platform refused and its source from what is
+wanted. It asks for the key or password hidden at the terminal, or reads it from its standard
+input when a script feeds it; a key is never typed on the command line. Typed by hand, run it
+inside the `ssh` session rather than as the command `ssh` is given, so the terminal hides the key
+as you type it.
 
 The assistant can run a pass now rather than wait five minutes, through the socket; it asks
 the service, which holds the keys, and never reads them itself.
 
-What each connection has fetched so far is kept in `/var/lib/v2b/archive/`; it holds no keys.
+What each connection has fetched so far is kept in `/var/lib/v2b/archive/`, beside the keys.
 
 | In this repository | On your server |
 |---|---|
