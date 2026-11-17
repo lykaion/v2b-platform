@@ -16,11 +16,16 @@ Each release is unpacked whole beside the one running, as a generation under
 The system packages listed in `deploy/packages` that the server lacks are installed first, then
 the services, settings and commands that differ from the previous generation, and only the
 services whose files changed are restarted. A new program, or a package installed, restarts
-`v2b-archive.service`, the one service that runs it; a service run by a timer is never
-restarted, it picks the change up on its next run. Twenty seconds after, every service
-that was running before must be running again; if one is not, the previous generation is put
-back and restarted, and the log says `rolled back`. The previous generation is kept; older ones
-are deleted.
+every kept-running service that runs it, `v2b-archive.service` and
+`v2b-remote-control.service`; a service run by a timer is never restarted, it picks the change
+up on its next run. The archive service counts as up only once it answers on its socket that
+its database is open, which it does after any migration the release adds, waited for up to ten
+minutes. Twenty seconds after, every service the update started must be running and must not
+have restarted on its own; if one is not, the previous generation is put back and restarted,
+held to the same check, and the log says `rolled back`, or `rolled back, not running` when the
+previous generation does not come up either. A release without its `server/` directory, or
+without the update's own service and timer, is refused before anything changes (`refused
+bundle`). The previous generation is kept; older ones are deleted.
 
 ## The archive service
 The archive service copies your Discord servers, your Telegram chats, your Slack conversations, your mailboxes and your Granola meetings into its database, read-only on the
@@ -226,7 +231,8 @@ moved. Claude Code's own updater is off, so the assistant runs only the copy roo
 
 - What changed and who changed it: `git log` in this repository.
 - Whether it was installed: `/var/log/v2b/deploy.log`, one line per event (`installed`,
-  `update failed`, `rolled back`, `refused signature`, `nothing new`). You can also ask the assistant whether the
+  `update failed`, `rolled back`, `rolled back, not running`, `refused signature`, `refused bundle`,
+  `nothing new`). You can also ask the assistant whether the
   last deploy worked; it can read that file.
 - The release installed: the generation `/usr/local/lib/v2b/current` links to.
 - What the archive service did: one journal, `journalctl -u v2b-archive`, with a line for each
