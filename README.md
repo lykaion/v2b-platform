@@ -229,8 +229,8 @@ moved. Claude Code's own updater is off, so the assistant runs only the copy roo
 - The release installed: the generation `/usr/local/lib/v2b/current` links to.
 - What the archive service did: one journal, `journalctl -u v2b-archive`, with a line for each
   pass and its counts, each failure, and each request to the service with the caller's user
-  id. `/usr/local/lib/v2b/bin/v2b status` shows each connection: copied or not yet, its last pass,
-  whether it went well and why not; the assistant can run it for you.
+  id. `/usr/local/lib/v2b/bin/v2b status` shows each account and place V2B reads, by its name,
+  where it stands and how far back its copy reaches; the assistant can run it for you.
 - What the assistant was asked and did: `/home/v2b-agent/use-log/`, written by the hooks in
   `claude/managed-settings.json` from what Claude Code hands each hook, one JSON line per
   event. `prompt.jsonl` holds each question; `tool.jsonl` each tool call, its input and what it
@@ -270,4 +270,4 @@ name a connection by its name: `telegram`, `discord`, `granola`, `slack-<name>`,
 | `v2b-day`, `v2b-who`, `v2b-history`, `v2b-raw`, `v2b-held`, `v2b-query` | Read what the service holds: a channel's day, who was in an utterance, an utterance's readings, one reading as the platform answered it, every source and place held, a free read-only query. Asked of the service; none opens the database. |
 | `v2b-business`, `v2b-people`, `v2b-assign` | Write the businesses, the people and the business a workspace, channel or chat is about, on the owner's word in chat. |
 | `v2b sync <connection>` | Asks for one pass of that connection now and answers at once, without waiting for it: says the pass is asked for, or that the pass running is the one asked for, or that one began less than a minute ago and nothing is asked for. `v2b status` says how far it is. Exit 0 when a pass is asked for or running, or the connection is not copied yet; 1 on a refused request, a last pass that failed within the minute, an unknown connection or a service it cannot reach (one line naming the socket); 2 on a bad argument. |
-| `v2b status` | One line per connection: its name, business, not copied yet or its last pass time, ok or the error, and the pass's counts. `--json` prints the service's answer, its last line without the transport's `done` (`ok`, `wire` and `connections` in it). |
+| `v2b status` | The one status, as the dashboard and the assistant's `list` give it: each account and place V2B reads, by the name its platform gives it, where it stands, the business it is under and how far back its copy reaches; this installation's settings, services and release; the businesses. Every time in one form, in the owner's zone. A line before it where the database is not open or the platforms are pointed at stand-ins. `--json` prints the service's per-connection answer, its last line without the transport's `done` (`ok`, `wire` and `connections` in it). |
