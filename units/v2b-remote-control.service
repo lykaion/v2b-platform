@@ -31,7 +31,7 @@ RestartMaxDelaySec=10min
 # journal, so nothing of the agent's sessions reaches the journal. `v2b remote-control-run`, the
 # start above, passes it on and holds the file under 64 KiB however long the run, the end kept;
 # after each run, root keeps the last of it when the run failed and empties it ("-": a failure
-# here never holds up a restart). `v2b state` and the setup show the kept words.
+# here never holds up a restart). The status the Mac reads carries the kept words.
 StandardOutput=null
 StandardError=append:/run/v2b-remote-control.stderr
 ExecStopPost=-+/usr/local/lib/v2b/current/bin/v2b remote-control-ended

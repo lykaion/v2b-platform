@@ -169,21 +169,10 @@ allowed for each platform are the same whatever its address.
 Only the service opens the database, holding its lock in `/var/lib/v2b/archive/`, and it writes
 one pass at a time.
 
-`sudo /usr/local/lib/v2b/bin/v2b connect` keeps a key for you, and running it again replaces it.
-It writes the key's file, gives what is wanted with the source in it, asks the service over its
-socket to read the keys again and, where a pass follows, to run that pass, and prints what the pass
-copied; no service is restarted. `slack <name>` sets a Slack workspace's key, the conversations
-ticked afterwards with `v2b choose slack <name> <id,...>`, which runs a pass; `telegram` sets the
-Telegram sign-in and runs a pass; `discord` sets the Discord key and runs a pass; `granola` sets
-the Granola key and runs a pass, the folders ticked afterwards with `v2b choose granola <folder>`,
-one folder (or `unfiled`) at a time; `mail <name> <user> <host> <port>` sets a mailbox's password,
-its folders chosen afterwards with `v2b choose mail <name> <folder,...>`. Port 143 uses
-STARTTLS; a password with a character other than ASCII is refused, since IMAP's sign-in cannot
-carry it. `v2b connect forget` removes a key the platform refused and its source from what is
-wanted. It asks for the key or password hidden at the terminal, or reads it from its standard
-input when a script feeds it; a key is never typed on the command line. Typed by hand, run it
-inside the `ssh` session rather than as the command `ssh` is given, so the terminal hides the key
-as you type it.
+A key reaches the server only from the Mac, over its kept connection: `v2b answer`, run as root
+over SSH, takes what is wanted whole with the keys beside it and passes them to the service, which
+alone writes a key's file, tries it, and reports its life in the status the Mac reads back. No
+key is typed on the server, and no command there writes one.
 
 The assistant can run a pass now rather than wait five minutes, through the socket; it asks
 the service, which holds the keys, and never reads them itself.
