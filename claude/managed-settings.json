@@ -95,6 +95,7 @@
       "mcp__v2b__read_place",
       "mcp__v2b__utterances_by_person",
       "mcp__v2b__owner_involvement",
+      "mcp__v2b__list",
       "mcp__v2b__source_status",
       "mcp__v2b__copy_now",
       "Edit(./stack/**)",

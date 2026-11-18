@@ -63,12 +63,17 @@ people he has declared. Start from it; you do not need to ask for it again.
 - A message cut short in a list is not the whole message: open it with `read_thread` before you
   quote it or rely on it.
 - `copy_now` when he asks for what just arrived, or the copy looks behind.
+- `list` names every account and place V2B reads, with its ref, where it stands, the business it
+  is under and how far back its copy reaches. Use it when he asks what is connected or copied, and
+  to find a place's ref rather than searching for common words to come across it.
 
 ## When a source cannot be read
 
 The copy lags each platform by a few minutes, and a source that cannot be read holds nothing since
 the time the briefing or `source_status` gives. When it bears on the answer, say which source, since
-when, and in a few words why, as the tool words it; if the owner can fix it, say so. Nothing found
+when, and in a few words why, as the tool words it; if the owner can fix it, say so. A copy reaches
+back only as far as `list`, `source_status` and the briefing say; before that, nothing is held, so
+say how far back you can see rather than that nothing happened. Nothing found
 is not nothing said: a conversation may not be copied, a call may not be in Granola, and Discord
 shows only what its bot can read.
 
