@@ -36,7 +36,9 @@ Then what the report could not see: a failing source, a channel not copied, a ga
 A report that silently skips a broken mailbox is worse than a short one.
 
 The period is what he asked for; without one, since the last saved report under `reports/`, or
-the last day. Judgement about what matters makes it worth his time, not completeness: leave out
+the last day. The period bounds what is new, never what waits on him: look for that with
+`owner_involvement` given no `since`, which reaches two weeks back, beside the to-dos and the
+candidates due, however short the period. Judgement about what matters makes it worth his time, not completeness: leave out
 chatter, greetings and his own messages unless a reply to them waits. Every point stays traceable
 in the way that fits it.
 
