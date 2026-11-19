@@ -1,0 +1,43 @@
+[Unit]
+Description=V2B write last week's digest of the reports, some followed to their records
+After=network-online.target v2b-archive.socket
+Wants=network-online.target
+# Claude's sign-in is the agent's; until it exists there is no model to ask, and the run is skipped.
+ConditionPathExists=/home/v2b-agent/.claude/.credentials.json
+
+[Service]
+Type=oneshot
+User=v2b-agent
+WorkingDirectory=/home/v2b-agent/workspace
+Environment=PATH=/usr/local/lib/claude-code/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=DISABLE_AUTOUPDATER=1
+ExecStart=/usr/local/lib/v2b/current/bin/v2b digest
+TimeoutStartSec=1h
+Nice=10
+# The digest runs Claude Code with no tool (internal/digest): the model reads the week's reports,
+# and the summaries and messages behind the ones it follows, as text and answers lines, which this
+# program checks and writes under digests/ alone. It reads the copy through the archive socket, as
+# the summaries do. The lines are the agent's unit's (v2b-remote-control.service).
+InaccessiblePaths=-/etc/v2b -/var/lib/v2b/archive
+UMask=0077
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+RestrictSUIDSGID=yes
+ProtectSystem=strict
+ReadWritePaths=/home/v2b-agent
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM

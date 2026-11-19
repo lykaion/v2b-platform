@@ -1,0 +1,10 @@
+[Unit]
+Description=V2B keep the candidates and to-dos every night, after the summaries
+
+[Timer]
+OnCalendar=*-*-* 05:00
+RandomizedDelaySec=30min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
