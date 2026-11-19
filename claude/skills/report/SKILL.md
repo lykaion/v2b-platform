@@ -27,8 +27,10 @@ It opens with what needs him, in this order:
    made in a channel he skips is still his business. A quiet business gets a line saying so.
 
 If nothing needs him, say that first; it is the most useful sentence a quiet report has. Nothing
-the last saved report showed is shown again, unless it still waits on him: a to-do, or a candidate
-due again. When nothing is new since the last report, say so in a line rather than retell it.
+the last saved report showed or told is shown again, unless it still waits on him: a to-do, or a
+candidate due again. A point that seems to wait on him but is neither is not repeated: the ledger
+makes it a candidate, and it comes back when due. When nothing is new since the last report, say so
+in a line rather than retell it.
 
 Then what the report could not see: a failing source, a channel not copied, a gap in the period.
 A report that silently skips a broken mailbox is worse than a short one.
@@ -48,6 +50,7 @@ at: 2026-11-19 09:30
 from: 2026-11-18 09:30
 to: 2026-11-19 09:30
 showed: po-2231, oven-repair
+told: slack/T123/C456/1731.0002
 used: summaries/2026-11-18/slack-T123-C456, slack/T123/C456/1731.0001
 
 (the report as he was handed it)
@@ -56,6 +59,9 @@ used: summaries/2026-11-18/slack-T123-C456, slack/T123/C456/1731.0001
 - `at` is when you gave it, `from` and `to` the period it covers, in his time zone.
 - `showed` is the id of every to-do and candidate it showed (a file's name without `.md`), and
   only those; none where it showed none.
+- `told` is the message (its reference, as the tools print it) behind every other point it
+  showed, news included: one per point, the one its link goes to. Every point of the report is in
+  `showed` or `told`.
 - `used` is every summary (its path without `.md`) and every message (its reference, as the tools
   print it) a point of the report rests on. What a report used is no longer new to the next.
 - A blank line ends the header. One value per line also works: `showed: po-2231` twice.
