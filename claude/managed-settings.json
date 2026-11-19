@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ \"$V2B_RUN\" = summarize ] || /usr/local/lib/v2b/bin/v2b-now --start 2>/dev/null || true"
+            "command": "case \"$V2B_RUN\" in summarize|ledger|digest) ;; *) /usr/local/lib/v2b/bin/v2b-now --start 2>/dev/null ;; esac; true"
           }
         ]
       }
@@ -98,7 +98,6 @@
       "mcp__v2b__list",
       "mcp__v2b__source_status",
       "mcp__v2b__copy_now",
-      "Edit(./stack/**)",
       "Edit(./reports/**)"
     ]
   },
