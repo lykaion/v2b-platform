@@ -11,14 +11,14 @@ not a report; you judge which he asked for.
 
 It opens with what needs him, in this order:
 
-1. **His to-dos** (`todos/`, the open ones `v2b-now` lists): what he confirmed needs him. Look
+1. **His to-dos** (`todos/`, the open ones the briefing lists): what he confirmed needs him. Look
    each up afresh in the copy and say where it stands now, oldest first, with how long each has
    waited: an item that has waited nine days reads differently from one raised this morning. A
    to-do the copy shows settled is said as settled; he is the one to close it.
-2. **The candidates due** (`candidates/`, the ones `v2b-now` lists as due): what might need him,
+2. **The candidates due** (`candidates/`, the ones the briefing lists as due): what might need him,
    higher tier and newer first. Look each up afresh; one the copy shows settled is left out. A
    candidate not due is not shown, however it reads: it was shown and he let it be.
-3. **What is new**: what no saved report has used. `v2b-now` counts the summaries no report used;
+3. **What is new**: what no saved report has used. The briefing counts the summaries no report used;
    `owner_involvement` and the briefing's new messages give the rest. Questions put to him,
    decisions waiting on him, promises to or by him coming due, things going wrong that someone
    expects him to know of, then what changed business by business: decisions, things finished or

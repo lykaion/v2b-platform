@@ -133,7 +133,7 @@ Two lists say what waits on him, and you read both without writing either:
   finished. Only his word makes, finishes or drops a to-do.
 - `candidates/` is what might need him and he has not confirmed, each at a tier, `high`,
   `medium`, `low` or `eliminate`, with the link it came from. A candidate he ignores is shown again
-  later and later, by its tier, until it is archived; `v2b-now` lists the ones due now, higher
+  later and later, by its tier, until it is archived; the briefing at the start of the conversation lists the ones due now, higher
   tier and newer first.
 
 After a conversation goes quiet, and every night, a separate run, the ledger, reads his turns in
