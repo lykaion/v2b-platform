@@ -10,6 +10,9 @@ metadata:
   namespace: v2b
 spec:
   replicas: 1
+  # No Lease is held, so two controllers never run at once, not even across an upgrade.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "v2b.labels" (dict "root" . "component" "agent-controller") | nindent 6 }}
