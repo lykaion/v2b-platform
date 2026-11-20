@@ -33,6 +33,7 @@ spec:
       containers:
       - name: archive
         image: {{ .Values.core.images.program }}
+        command: [v2b]
         args:
         - archive
         - --listen
