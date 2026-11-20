@@ -1,0 +1,51 @@
+{{- /*
+The agent's controller (agent.md, The controller): the Agent reconciled into the settings key and
+Claude's Deployment, and Claude's sign-in run in its own pod. It mounts the sign-in's directory as the
+workspace's table gives its role; its own claude keeps its configuration and home in /tmp, set in Go.
+*/ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-controller
+  namespace: v2b
+spec:
+  replicas: 1
+  # No Lease is held, so two controllers never run at once, not even across an upgrade.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "v2b.labels" (dict "root" . "component" "agent-controller") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "v2b.labels" (dict "root" . "component" "agent-controller" "calls" (list "cluster" "internet")) | nindent 8 }}
+    spec:
+      serviceAccountName: agent-controller
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "v2b.securityContext" (list . "pod") | nindent 8 }}
+      containers:
+      - name: controller
+        image: {{ .Values.core.images.claude }}
+        command: [v2b, agent, controller]
+        env:
+          {{- include "v2b.workspace.signIn" . | nindent 10 }}
+          - name: V2B_AGENT_SETTINGS
+            value: {{ include "v2b.agentSettings.name" . | quote }}
+          - name: V2B_CLAUDE_DEPLOYMENT
+            value: {{ include "v2b.claude.name" . | quote }}
+        resources:
+          {{- toYaml .Values.agent.controller.resources | nindent 10 }}
+        securityContext:
+          {{- include "v2b.securityContext" (list . "container") | nindent 10 }}
+        volumeMounts:
+          {{- include "v2b.workspace.mounts" (list . "agent-controller") | nindent 10 }}
+          {{- include "v2b.cluster.token" (list . "mount") | nindent 10 }}
+          - name: tmp
+            mountPath: /tmp
+      volumes:
+        {{- include "v2b.workspace.volume" . | nindent 8 }}
+        {{- include "v2b.cluster.token" (list . "volume") | nindent 8 }}
+        - name: tmp
+          emptyDir: {}

@@ -1,0 +1,63 @@
+{{- /*
+Claude's pod (agent.md, Claude's pod): one Remote Control at a time, so one replica and Recreate. It
+mounts the agent's volume whole at the mount root, the one pod the core allows it, and prepares the
+workspace's directories itself in v2b agent claude; HOME and CLAUDE_CONFIG_DIR are set there, in Go.
+The settings key is the controller's, mounted read-only where Claude reads its managed settings.
+*/ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "v2b.claude.name" . }}
+  namespace: v2b
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "v2b.labels" (dict "root" . "component" "claude") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "v2b.labels" (dict "root" . "component" "claude" "calls" (list "archive" "internet")) | nindent 8 }}
+    spec:
+      serviceAccountName: agent
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "v2b.securityContext" (list . "pod") | nindent 8 }}
+      containers:
+      - name: claude
+        image: {{ .Values.core.images.claude }}
+        command: [v2b, agent, claude]
+        env:
+          {{- include "v2b.archive.env" . | nindent 10 }}
+          {{- include "v2b.workspace.signIn" . | nindent 10 }}
+          - name: TZ
+            value: {{ include "v2b.timezone" . | quote }}
+          - name: DISABLE_AUTOUPDATER
+            value: "1"
+        readinessProbe:
+          exec:
+            command: [v2b, agent, ready]
+        terminationMessagePolicy: File
+        resources:
+          {{- toYaml .Values.agent.claude.resources | nindent 10 }}
+        securityContext:
+          {{- include "v2b.securityContext" (list . "container") | nindent 10 }}
+        volumeMounts:
+          {{- include "v2b.workspace.whole" . | nindent 10 }}
+          {{- include "v2b.archive.token" (list . "mount") | nindent 10 }}
+          - name: settings
+            mountPath: /etc/claude-code/managed-settings.json
+            subPath: managed-settings.json
+            readOnly: true
+          - name: tmp
+            mountPath: /tmp
+      volumes:
+        {{- include "v2b.workspace.volume" . | nindent 8 }}
+        {{- include "v2b.archive.token" (list . "volume") | nindent 8 }}
+        - name: settings
+          configMap:
+            name: {{ include "v2b.agentSettings.name" . }}
+        - name: tmp
+          emptyDir: {}

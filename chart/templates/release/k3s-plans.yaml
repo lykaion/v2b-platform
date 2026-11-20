@@ -1,0 +1,45 @@
+{{- /*
+k3s's upgrade, one Plan per step of k3s-steps.json, under the upgrade controller's own ServiceAccount
+as upstream's k3s plans run. Each step's job waits, in its prepare container, until the node runs the
+step before it; its upgrade ends at once when the host's k3s is at or above the step, and otherwise
+runs the k3s-upgrade image's own upgrade. Rendered only when the release turns it on.
+*/ -}}
+{{- if .Values.release.upgradeK3s }}
+{{- $steps := .Files.Get "k3s-steps.json" | fromJsonArray }}
+{{- if not $steps }}
+{{- fail "release.upgradeK3s: the chart carries no k3s-steps.json, or it holds no step" }}
+{{- end }}
+{{- $previous := "" }}
+{{- $atOrAbove := include "v2b.release.atOrAbove" . }}
+{{- range $steps }}
+{{- if not (regexMatch "^v1\\.[0-9]+\\.[0-9]+\\+k3s[0-9]+$" .) }}
+{{- fail (printf "k3s-steps.json: %q is no k3s version v1.Y.Z+k3sN" .) }}
+{{- end }}
+---
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: {{ printf "k3s-v1-%s" (regexReplaceAll "^v1\\.([0-9]+)\\..*$" . "${1}") }}
+  namespace: system-upgrade
+spec:
+  version: {{ . | quote }}
+  concurrency: 1
+  cordon: false
+  serviceAccountName: system-upgrade
+  nodeSelector:
+    {{- include "v2b.release.controlPlane" $ | nindent 4 }}
+  {{- with $previous }}
+  prepare:
+    image: rancher/k3s-upgrade
+    command: [sh, -c]
+    args:
+    - {{ printf "%s\nuntil at_or_above \"$(/opt/k3s kubectl get nodes --selector node-role.kubernetes.io/control-plane -o jsonpath='{.items[*].status.nodeInfo.kubeletVersion}')\" %s; do\n  echo 'waiting for the node to run %s'\n  sleep 5\ndone\n" $atOrAbove (. | squote) . | toJson }}
+  {{- end }}
+  upgrade:
+    image: rancher/k3s-upgrade
+    command: [sh, -c]
+    args:
+    - {{ printf "%s\nk3s=/host/usr/local/bin/k3s\nif [ -x \"$k3s\" ] && at_or_above \"$(\"$k3s\" --version | head -n 1)\" %s; then\n  echo 'k3s is at or above %s'\n  exit 0\nfi\nexec /bin/upgrade.sh upgrade\n" $atOrAbove (. | squote) . | toJson }}
+{{- $previous = . }}
+{{- end }}
+{{- end }}

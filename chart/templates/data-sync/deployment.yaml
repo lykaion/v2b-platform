@@ -1,0 +1,60 @@
+{{- /* Data sync: one pod at a time, since its volume is ReadWriteOnce. Every shared name is reached
+through the core's helpers. The stand-in GitHub is aimed at by dataSync.standinGitHub alone. */ -}}
+{{- $github := .Values.dataSync.standinGitHub -}}
+{{- if and $github.address (not $github.hostKey) -}}
+{{- fail "dataSync.standinGitHub: an address with no hostKey" -}}
+{{- end -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-sync
+  namespace: v2b
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "v2b.labels" (dict "root" . "component" "data-sync") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "v2b.labels" (dict "root" . "component" "data-sync" "calls" (list "archive" "cluster" "internet")) | nindent 8 }}
+    spec:
+      serviceAccountName: data-sync
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "v2b.securityContext" (list . "pod") | nindent 8 }}
+      containers:
+      - name: data-sync
+        image: {{ .Values.core.images.program }}
+        command: [v2b, data-sync]
+        env:
+        - name: HOME
+          value: /var/lib/v2b-data-sync
+        {{- include "v2b.archive.env" . | nindent 8 }}
+        {{- if $github.address }}
+        - name: V2B_GITHUB_SSH
+          value: {{ $github.address | quote }}
+        - name: V2B_GITHUB_HOST_KEY
+          value: {{ $github.hostKey | quote }}
+        {{- end }}
+        securityContext:
+          {{- include "v2b.securityContext" (list . "container") | nindent 10 }}
+        volumeMounts:
+          {{- include "v2b.workspace.mounts" (list . "data-sync") | nindent 10 }}
+          {{- include "v2b.cluster.token" (list . "mount") | nindent 10 }}
+          {{- include "v2b.archive.token" (list . "mount") | nindent 10 }}
+          - name: state
+            mountPath: /var/lib/v2b-data-sync
+          - name: tmp
+            mountPath: /tmp
+      volumes:
+        {{- include "v2b.workspace.volume" . | nindent 8 }}
+        {{- include "v2b.cluster.token" (list . "volume") | nindent 8 }}
+        {{- include "v2b.archive.token" (list . "volume") | nindent 8 }}
+        - name: state
+          persistentVolumeClaim:
+            claimName: data-sync
+        - name: tmp
+          emptyDir: {}

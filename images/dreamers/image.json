@@ -1,0 +1,1 @@
+{"Image": "claude", "Packages": [{"Name": "jq", "Programs": ["/usr/bin/jq"]}, {"Name": "ca-certificates", "Data": ["/etc/ssl/certs/ca-certificates.crt"]}]}

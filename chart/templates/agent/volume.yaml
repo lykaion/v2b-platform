@@ -1,0 +1,18 @@
+{{- /*
+The agent's volume (workspace.md): the workspace's directories, the sign-in's and Claude's
+configuration, on k3s's local-path class. Kept on uninstall, since losing it loses the sign-in, the
+transcripts and what the agent wrote. Each pod mounts it as the core's helpers give its role.
+*/ -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "v2b.workspace.claim" . }}
+  namespace: v2b
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: {{ required "agent.volumeSize: the agent's volume's size is not set" .Values.agent.volumeSize }}
