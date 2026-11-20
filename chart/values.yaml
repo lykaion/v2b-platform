@@ -130,3 +130,9 @@ core:
     assignment_remove: [agent]
     own_keep: [agent]
     own_forget: [agent]
+
+archive:
+  # The archive's volume's size.
+  storage: 10Gi
+  # The stand-in platforms' addresses, platform to address, rendered only beside core.standinPlatforms.
+  platformAddresses: {}
