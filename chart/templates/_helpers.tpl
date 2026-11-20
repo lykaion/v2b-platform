@@ -93,11 +93,61 @@ authority and the namespace beside it, at the path controller-runtime's in-clust
 {{ .Values.core.agentVolume }}
 {{- end -}}
 
-{{- /* v2b.workspace.volume: the agent's volume, as one item of a pod's volumes. */ -}}
+{{- /* v2b.workspace.volume: the agent's volume, as one item of a pod's volumes, named as its claim. */ -}}
 {{- define "v2b.workspace.volume" -}}
-- name: agent-home
+- name: {{ include "v2b.workspace.claim" . }}
   persistentVolumeClaim:
     claimName: {{ include "v2b.workspace.claim" . }}
+{{- end -}}
+
+{{- /* v2b.workspace.root: the mount root, where every pod mounts the agent's volume, as text. */ -}}
+{{- define "v2b.workspace.root" -}}
+{{ .Values.core.workspace.mountRoot }}
+{{- end -}}
+
+{{- /*
+v2b.workspace.mounts: a role's mounts of the agent's volume, (list . "<role>"), as items of a
+container's volumeMounts: each directory of core.workspace.dirs its cell names, at the mount root, read-only
+where the cell reads. A role with no cell fails the render.
+*/ -}}
+{{- define "v2b.workspace.mounts" -}}
+{{- $root := index . 0 -}}
+{{- $role := index . 1 -}}
+{{- $n := 0 -}}
+{{- range $root.Values.core.workspace.dirs -}}
+{{- $cell := index .cells $role | default "" -}}
+{{- if $cell -}}
+{{- if not (has $cell (list "writes" "reads" "uses")) -}}
+{{- fail (printf "v2b.workspace.mounts: %s's cell for %s is %q; writes, reads or uses" .path $role $cell) -}}
+{{- end -}}
+{{- $n = add1 $n }}
+- name: {{ include "v2b.workspace.claim" $root }}
+  mountPath: {{ printf "%s/%s" (include "v2b.workspace.root" $root) .path }}
+  subPath: {{ .path }}
+  readOnly: {{ eq $cell "reads" }}
+{{- end -}}
+{{- end -}}
+{{- if eq $n 0 -}}
+{{- fail (printf "v2b.workspace.mounts: %q has no cell in core.workspace.dirs" $role) -}}
+{{- end -}}
+{{- end -}}
+
+{{- /*
+v2b.workspace.whole: Claude's one mount of the agent's volume, whole, at the mount root, writable, as
+an item of a container's volumeMounts; charttest refuses it in any other pod.
+*/ -}}
+{{- define "v2b.workspace.whole" -}}
+- name: {{ include "v2b.workspace.claim" . }}
+  mountPath: {{ include "v2b.workspace.root" . }}
+{{- end -}}
+
+{{- /*
+v2b.workspace.signIn: the variable naming the sign-in's directory to claude, as an item of a
+container's env, in every container that mounts it; its name is claude.SignInDirEnv.
+*/ -}}
+{{- define "v2b.workspace.signIn" -}}
+- name: CLAUDE_SECURESTORAGE_CONFIG_DIR
+  value: {{ printf "%s/%s" (include "v2b.workspace.root" .) .Values.core.workspace.signIn | quote }}
 {{- end -}}
 
 {{- /*

@@ -15,6 +15,35 @@ core:
 
   # The agent's volume claim, made by the agent under v2b.workspace.claim.
   agentVolume: agent-home
+  # The agent's volume as a table (workspace.md), held equal to internal/contract/workspace's Table:
+  # every pod mounts a directory of its row at mountRoot/<path>, by v2b.workspace.mounts, writable
+  # where its cell writes or uses and read-only where it reads; Claude's pod alone mounts the volume
+  # whole, by v2b.workspace.whole. signIn is the sign-in's directory, named to claude by
+  # v2b.workspace.signIn.
+  workspace:
+    mountRoot: /home/v2b-agent
+    signIn: .claude-sign-in
+    dirs:
+    - path: workspace/reports
+      cells: {claude: writes, ledger: reads, digest: reads}
+    - path: workspace/summaries
+      cells: {claude: reads, summaries: writes, ledger: reads, digest: reads}
+    - path: workspace/candidates
+      cells: {claude: reads, ledger: writes}
+    - path: workspace/todos
+      cells: {claude: reads, ledger: writes}
+    - path: workspace/digests
+      cells: {claude: reads, digest: writes}
+    - path: workspace/context
+      cells: {claude: writes, data-sync: writes}
+    - path: use-log
+      cells: {claude: writes, summaries: writes, ledger: writes, digest: writes}
+    - path: .claude-sign-in
+      cells: {claude: uses, agent-controller: uses, summaries: uses, ledger: uses, digest: uses}
+    - path: .claude
+      cells: {claude: writes}
+    - path: .claude/projects
+      cells: {claude: writes, ledger: reads}
   # Claude's Deployment, made by the agent under v2b.claude.name.
   claudeDeployment: claude
   # The agent's settings object, a ConfigMap the agent makes under v2b.agentSettings.name.
