@@ -1,0 +1,18 @@
+{
+  "Image": "claude",
+  "Packages": [
+    {"Name": "bsdutils", "Programs": ["/usr/bin/script"]},
+    {"Name": "jq", "Programs": ["/usr/bin/jq"]},
+    {"Name": "ca-certificates", "Data": ["/etc/ssl/certs/ca-certificates.crt"]}
+  ],
+  "Files": [
+    {"From": "server/workspace/CLAUDE.md", "To": "/etc/claude-code/CLAUDE.md", "Mode": "0644"},
+    {"From": "server/claude/managed-mcp.json", "To": "/etc/claude-code/managed-mcp.json", "Mode": "0644"},
+    {"From": "server/claude/managed-settings.json", "To": "/usr/local/share/v2b/managed-settings.json", "Mode": "0644"}
+  ],
+  "Directories": [
+    {"From": "server/claude/commands", "To": "/etc/claude-code/.claude/commands", "Mode": "0644"},
+    {"From": "server/claude/skills", "To": "/etc/claude-code/.claude/skills", "Mode": "0644"},
+    {"From": "server/claude/agents", "To": "/etc/claude-code/.claude/agents", "Mode": "0644"}
+  ]
+}
