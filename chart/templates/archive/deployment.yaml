@@ -1,0 +1,89 @@
+{{- /*
+The archive: one replica over one volume, Recreate so one process holds the database's lock. Its
+Service is the core's, selecting the pod by its component label.
+*/ -}}
+{{- $port := (include "v2b.archive.port" . | fromYamlArray | first).containerPort -}}
+{{- $addresses := .Values.archive.platformAddresses -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: archive
+  namespace: v2b-archive
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: archive
+  template:
+    metadata:
+      labels:
+        {{- include "v2b.labels" (dict "root" . "component" "archive" "calls" (list "cluster" "internet")) | nindent 8 }}
+      {{- with $addresses }}
+      annotations:
+        v2b/platform-addresses: {{ include "archive.platformAddresses" $ | sha256sum | quote }}
+      {{- end }}
+    spec:
+      serviceAccountName: archive
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        {{- include "v2b.securityContext" (list . "pod") | nindent 8 }}
+      containers:
+      - name: archive
+        image: {{ .Values.core.images.program }}
+        args:
+        - archive
+        - --listen
+        - {{ printf ":%v" $port | quote }}
+        - --data
+        - /var/lib/v2b-archive
+        {{- with $addresses }}
+        - --addresses
+        - /etc/v2b-archive
+        {{- end }}
+        env:
+        - name: TZ
+          value: {{ include "v2b.timezone" . | quote }}
+        ports:
+          {{- include "v2b.archive.port" . | nindent 10 }}
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: api
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: api
+        securityContext:
+          {{- include "v2b.securityContext" (list . "container") | nindent 10 }}
+          readOnlyRootFilesystem: true
+        volumeMounts:
+          {{- include "v2b.cluster.token" (list . "mount") | nindent 10 }}
+          - name: data
+            mountPath: /var/lib/v2b-archive
+          - name: tmp
+            mountPath: /tmp
+          {{- with $addresses }}
+          - name: platform-addresses
+            mountPath: /etc/v2b-archive/platform-addresses.env
+            subPath: platform-addresses.env
+            readOnly: true
+          {{- end }}
+      volumes:
+        {{- include "v2b.cluster.token" (list . "volume") | nindent 8 }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: archive-data
+        - name: tmp
+          emptyDir: {}
+        {{- with $addresses }}
+        - name: platform-addresses
+          configMap:
+            name: archive-platform-addresses
+            items:
+            - key: platform-addresses.env
+              path: platform-addresses.env
+              mode: 0444
+        {{- end }}

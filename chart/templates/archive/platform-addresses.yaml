@@ -1,0 +1,17 @@
+{{- /*
+The stand-in platforms' addresses, only beside core.standinPlatforms: a release never points the
+archive at a stand-in. Mounted as the one file by the Deployment (config.ReadAddresses refuses a link).
+*/ -}}
+{{- with .Values.archive.platformAddresses }}
+{{- if not $.Values.core.standinPlatforms }}
+{{- fail "archive.platformAddresses is set while core.standinPlatforms is false; a release never points the archive at a stand-in" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: archive-platform-addresses
+  namespace: v2b-archive
+data:
+  platform-addresses.env: |
+    {{- include "archive.platformAddresses" $ | nindent 4 }}
+{{- end }}
