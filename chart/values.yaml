@@ -144,6 +144,14 @@ dataSync:
     address: ""
     hostKey: ""
 
+release:
+  # The release path's Plans of the upgrade controller, each on only in the values the bundle's
+  # HelmRelease sets: k3s's upgrade, one step per minor; the host plan; and the local registry a
+  # development bundle was placed from, empty for a release's.
+  upgradeK3s: false
+  placeHost: false
+  devRegistry: ""
+
 dreamers:
   # Each dreamer's CronJob schedule, in the server's time zone.
   schedules:

@@ -1,0 +1,25 @@
+{{- /*
+The host plan: a job under v2b-host, on the program image, that waits for the release to be ready at
+the chart's version and then writes the bundle of the kind placed (Dev when release.devRegistry names
+a registry, Current otherwise) into k3s's manifests directory. Rendered only when the release turns
+it on.
+*/ -}}
+{{- if .Values.release.placeHost }}
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: v2b-host
+  namespace: system-upgrade
+spec:
+  {{- /* The cut stamps the app version; a chart not yet stamped reads its own version. */}}
+  version: {{ .Chart.AppVersion | default .Chart.Version | quote }}
+  concurrency: 1
+  cordon: false
+  serviceAccountName: v2b-host
+  nodeSelector:
+    {{- include "v2b.release.controlPlane" . | nindent 4 }}
+  upgrade:
+    image: {{ required "core.images.program: the program image is not set" .Values.core.images.program | quote }}
+    command: [v2b]
+    args: [release, place-host, --root, /host{{ with .Values.release.devRegistry }}, --dev-registry, {{ . | quote }}{{ end }}]
+{{- end }}
