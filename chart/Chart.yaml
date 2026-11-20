@@ -1,0 +1,5 @@
+apiVersion: v2
+name: v2b
+description: What a V2B server runs on its cluster, one component to a directory under templates/.
+type: application
+version: 0.0.0

@@ -1,0 +1,390 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.23.0
+    helm.sh/resource-policy: keep
+  name: connections.v2b.aliz.show
+spec:
+  group: v2b.aliz.show
+  names:
+    kind: Connection
+    listKind: ConnectionList
+    plural: connections
+    singular: connection
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          Connection is one account of one platform, copied as wanted. Its wanted half is the Mac
+          service's to write, its status the archive's; it lives in ArchiveNamespace, named by
+          ConnectionName.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ConnectionSpec is the wanted half of a Connection.
+            properties:
+              acceptedTraces:
+                description: AcceptedTraces is what the owner accepted others may
+                  see.
+                items:
+                  description: VisibleTrace is a sign of V2B's access that someone
+                    on the platform can see, and who can see it.
+                  properties:
+                    kind:
+                      description: VisibleTraceKind is one kind of sign of V2B's access
+                        that someone on a platform can see.
+                      enum:
+                      - a new sign-in notice
+                      - an app installed
+                      - a bot joined as a member
+                      - third-party access granted
+                      - a message marked read
+                      - the owner shown online
+                      - typing shown
+                      - a reaction added
+                      type: string
+                    visible_to:
+                      description: TraceAudience is who on the platform can see a
+                        trace.
+                      enum:
+                      - the owner alone
+                      - the workspace's admins
+                      - the members of the place
+                      - everyone
+                      type: string
+                  required:
+                  - kind
+                  - visible_to
+                  type: object
+                type: array
+              account:
+                description: Account is the account's identity on its platform.
+                type: string
+              firstCopyDays:
+                description: FirstCopyDays is how far back the first copy reads.
+                type: integer
+              key:
+                description: KeyGiven names the Secret that holds the key; the key
+                  itself is never in a kind.
+                properties:
+                  givenAt:
+                    description: GivenAt is moved by the Mac service at each new key,
+                      so the archive tries it.
+                    format: date-time
+                    type: string
+                  secret:
+                    description: Secret is a Secret in ArchiveNamespace, its one entry
+                      named KeyEntry.
+                    type: string
+                required:
+                - secret
+                type: object
+              places:
+                description: 'Places is which places to copy: Chosen false, the platform''s
+                  own default.'
+                properties:
+                  chosen:
+                    type: boolean
+                  only:
+                    items:
+                      description: |-
+                        Ref names one thing on a platform, written as the model writes a reference: "<platform>/<source>",
+                        a place's id after it, then an utterance's; "<platform>/@<account>" for an account. It is the
+                        reference's text, never parsed here: a reconciler that cannot parse one says SpecInvalid.
+                      type: string
+                    type: array
+                type: object
+              platform:
+                description: Platform is the account's platform, one of Platforms.
+                enum:
+                - slack
+                - telegram
+                - discord
+                - granola
+                - mail
+                type: string
+              reach:
+                description: Reach is a mailbox's host, port, STARTTLS and user; empty
+                  elsewhere.
+                properties:
+                  name:
+                    type: string
+                  port:
+                    type: integer
+                  starttls:
+                    type: boolean
+                  user:
+                    type: string
+                type: object
+            required:
+            - account
+            - key
+            - platform
+            type: object
+          status:
+            description: ConnectionStatus is the archive's half of a Connection.
+            properties:
+              conditions:
+                description: Conditions are ConnectionConditions.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              firstCopy:
+                description: Progress is how far a long piece of work has come, counted
+                  in Unit.
+                properties:
+                  done:
+                    type: integer
+                  total:
+                    type: integer
+                  unit:
+                    type: string
+                type: object
+              key:
+                description: |-
+                  KeyState is a platform key's life: when it was given, when last tried, and where it stands with
+                  its platform, with what that state carries.
+                properties:
+                  attempts:
+                    type: integer
+                  given:
+                    format: date-time
+                    type: string
+                  kind:
+                    description: KeyStateKind is where a platform key stands with
+                      its platform.
+                    enum:
+                    - unprobed
+                    - accepted
+                    - told-to-wait
+                    - refused
+                    - unknown
+                    type: string
+                  next_attempt_at:
+                    format: date-time
+                    type: string
+                  problem:
+                    description: |-
+                      Problem, RefusedSince, Attempts and NextAttemptAt are a refused key's: the problem, since
+                      when, how many tries were refused, when the next may be made.
+                    enum:
+                    - key-refused
+                    - session-ended
+                    - permission-missing
+                    - switch-off
+                    - address-wrong
+                    - unreachable
+                    - release-incomplete
+                    - other
+                    - retention-ends
+                    - plan-too-small
+                    type: string
+                  refused_since:
+                    format: date-time
+                    type: string
+                  tried:
+                    format: date-time
+                    type: string
+                  until:
+                    description: Until is, told to wait, when the key may be tried
+                      again.
+                    format: date-time
+                    type: string
+                required:
+                - kind
+                type: object
+              observedGeneration:
+                format: int64
+                type: integer
+              replacement:
+                description: Replacement is a newer key being tried while the older
+                  still works.
+                properties:
+                  attempts:
+                    type: integer
+                  given:
+                    format: date-time
+                    type: string
+                  kind:
+                    description: KeyStateKind is where a platform key stands with
+                      its platform.
+                    enum:
+                    - unprobed
+                    - accepted
+                    - told-to-wait
+                    - refused
+                    - unknown
+                    type: string
+                  next_attempt_at:
+                    format: date-time
+                    type: string
+                  problem:
+                    description: |-
+                      Problem, RefusedSince, Attempts and NextAttemptAt are a refused key's: the problem, since
+                      when, how many tries were refused, when the next may be made.
+                    enum:
+                    - key-refused
+                    - session-ended
+                    - permission-missing
+                    - switch-off
+                    - address-wrong
+                    - unreachable
+                    - release-incomplete
+                    - other
+                    - retention-ends
+                    - plan-too-small
+                    type: string
+                  refused_since:
+                    format: date-time
+                    type: string
+                  tried:
+                    format: date-time
+                    type: string
+                  until:
+                    description: Until is, told to wait, when the key may be tried
+                      again.
+                    format: date-time
+                    type: string
+                required:
+                - kind
+                type: object
+              shown:
+                description: Shown is what is visible to others on the platform now,
+                  and where to end it.
+                items:
+                  description: |-
+                    ShownThere is what V2B shows of itself on an account of a platform while it holds a key there:
+                    the trace, what it is in the owner's words, and where he ends it at the platform.
+                  properties:
+                    end_at:
+                      type: string
+                    trace:
+                      description: VisibleTrace is a sign of V2B's access that someone
+                        on the platform can see, and who can see it.
+                      properties:
+                        kind:
+                          description: VisibleTraceKind is one kind of sign of V2B's
+                            access that someone on a platform can see.
+                          enum:
+                          - a new sign-in notice
+                          - an app installed
+                          - a bot joined as a member
+                          - third-party access granted
+                          - a message marked read
+                          - the owner shown online
+                          - typing shown
+                          - a reaction added
+                          type: string
+                        visible_to:
+                          description: TraceAudience is who on the platform can see
+                            a trace.
+                          enum:
+                          - the owner alone
+                          - the workspace's admins
+                          - the members of the place
+                          - everyone
+                          type: string
+                      required:
+                      - kind
+                      - visible_to
+                      type: object
+                    what:
+                      type: string
+                  required:
+                  - end_at
+                  - trace
+                  - what
+                  type: object
+                type: array
+              waitUntil:
+                description: WaitUntil is set while a platform told the archive to
+                  wait.
+                format: date-time
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
