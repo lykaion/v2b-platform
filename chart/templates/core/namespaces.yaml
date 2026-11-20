@@ -1,0 +1,11 @@
+{{- /* The two namespaces, each enforcing the restricted pod security standard. */ -}}
+{{- range list "v2b" "v2b-archive" }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ . }}
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+{{- end }}

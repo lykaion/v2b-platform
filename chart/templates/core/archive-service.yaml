@@ -1,0 +1,14 @@
+{{- /* The archive's Service, the address v2b.archive.env gives its callers. */ -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: archive
+  namespace: v2b-archive
+spec:
+  selector:
+    app.kubernetes.io/component: archive
+  ports:
+  - name: api
+    port: {{ .Values.core.archive.port }}
+    targetPort: api
+    protocol: TCP

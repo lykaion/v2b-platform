@@ -1,2 +1,46 @@
-# The chart's values. The core's and each component's are added here as they are built.
-{}
+# The chart's values. The core's are under core, written once here and reached through the helpers in
+# templates/_helpers.tpl; each component's are added under its own key as it is built.
+
+# The server's time zone, filled by the release's valuesFrom; UTC when the release gives none.
+timezone: UTC
+
+core:
+  # The values of the label app.kubernetes.io/component, one per kind of pod; v2b.labels refuses any
+  # other. Held equal to internal/chart's Components.
+  components: [archive, claude, agent-controller, summaries, ledger, digest, data-sync]
+
+  # The archive's port, named api on its Service and its container.
+  archive:
+    port: 8080
+
+  # The agent's volume claim, made by the agent under v2b.workspace.claim.
+  agentVolume: agent-home
+  # Claude's Deployment, made by the agent under v2b.claude.name.
+  claudeDeployment: claude
+  # The agent's settings object, a ConfigMap the agent makes under v2b.agentSettings.name.
+  agentSettings: agent-settings
+  # The dashboard's token Secret. A credential is ended by a release naming a new Secret.
+  dashboardCredential: dashboard-credential-1
+  # The user and group every pod runs as.
+  userID: 10001
+
+  # The two images, each by digest, set by the release path at each release.
+  images:
+    program: ghcr.io/lykaion/v2b@sha256:0000000000000000000000000000000000000000000000000000000000000000
+    claude: ghcr.io/lykaion/v2b-claude@sha256:0000000000000000000000000000000000000000000000000000000000000000
+
+  # The cluster's addresses, k3s's defaults: the pods', the services', and the API's service address.
+  network:
+    podRange: 10.42.0.0/16
+    serviceRange: 10.43.0.0/16
+    apiService: 10.43.0.1
+    # What v2b/calls-internet never reaches, beside the two ranges above and the node.
+    privateRanges: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16]
+
+  # The node's address, used only where the render reaches no cluster: there it is read from the one
+  # Node. With neither, the render fails.
+  nodeAddress: ""
+
+  # True only on a local k3s with the stand-in platforms in the namespace v2b-standins: one policy more
+  # lets v2b/calls-internet reach that namespace. False in every release.
+  standinPlatforms: false

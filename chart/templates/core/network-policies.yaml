@@ -1,0 +1,134 @@
+{{- /*
+The network, by label (chart-and-policy.md): both namespaces deny everything but name lookups at
+kube-dns; a pod declares what it calls by a v2b/calls-* label, and each policy selects on the label.
+*/ -}}
+{{- $node := include "v2b.nodeAddress" . -}}
+{{- $net := .Values.core.network -}}
+{{- $port := .Values.core.archive.port -}}
+{{- range list "v2b" "v2b-archive" }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: {{ . }}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: calls-archive
+  namespace: {{ . }}
+spec:
+  podSelector:
+    matchLabels:
+      v2b/calls-archive: "true"
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: v2b-archive
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/component: archive
+    ports:
+    - {protocol: TCP, port: {{ $port }}}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: calls-cluster
+  namespace: {{ . }}
+spec:
+  podSelector:
+    matchLabels:
+      v2b/calls-cluster: "true"
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - ipBlock: {cidr: {{ printf "%s/32" $net.apiService }}}
+    ports:
+    - {protocol: TCP, port: 443}
+  - to:
+    - ipBlock: {cidr: {{ printf "%s/32" $node }}}
+    ports:
+    - {protocol: TCP, port: 6443}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: calls-internet
+  namespace: {{ . }}
+spec:
+  podSelector:
+    matchLabels:
+      v2b/calls-internet: "true"
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        {{- range $net.privateRanges }}
+        - {{ . }}
+        {{- end }}
+        - {{ $net.podRange }}
+        - {{ $net.serviceRange }}
+        - {{ printf "%s/32" $node }}
+{{- end }}
+---
+{{- /* The archive accepts from pods labelled v2b/calls-archive, in either namespace, and no other. */}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: archive-accepts-calls-archive
+  namespace: v2b-archive
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: archive
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          v2b/calls-archive: "true"
+    ports:
+    - {protocol: TCP, port: {{ $port }}}
+{{- if .Values.core.standinPlatforms }}
+---
+{{- /*
+On a local k3s only: the archive's pods labelled v2b/calls-internet, the platforms' callers, reach the
+stand-in platforms in v2b-standins, and nothing else inside.
+*/}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: calls-standins
+  namespace: v2b-archive
+spec:
+  podSelector:
+    matchLabels:
+      v2b/calls-internet: "true"
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: v2b-standins
+{{- end }}
