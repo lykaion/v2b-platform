@@ -131,6 +131,12 @@ core:
     own_keep: [agent]
     own_forget: [agent]
 
+archive:
+  # The archive's volume's size.
+  storage: 10Gi
+  # The stand-in platforms' addresses, platform to address, rendered only beside core.standinPlatforms.
+  platformAddresses: {}
+
 dataSync:
   # The stand-in GitHub, set only on a local k3s with the stand-ins: its SSH address (host:port) and its
   # host key in authorized_keys form. Empty in every release; an address with no host key fails the render.

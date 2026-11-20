@@ -1,0 +1,11 @@
+{{- /* The archive's volume: its database and its kept keys, mounted by the archive's one pod alone. */ -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: archive-data
+  namespace: v2b-archive
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: {{ .Values.archive.storage | default "10Gi" }}
