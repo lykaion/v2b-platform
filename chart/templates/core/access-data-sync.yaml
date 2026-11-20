@@ -1,0 +1,32 @@
+{{- /*
+Data sync's access: it reads the DataRepository and writes its status, and reads Flux's release object,
+by name, for the install log. Its key is in its own volume, so it reads and writes no Secret; no Lease.
+*/ -}}
+{{- $flux := .Values.core.flux -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: data-sync
+  namespace: v2b
+rules:
+- apiGroups: [v2b.aliz.show]
+  resources: [datarepositories]
+  verbs: [get, list, watch]
+- apiGroups: [v2b.aliz.show]
+  resources: [datarepositories/status]
+  verbs: [update, patch]
+---
+{{ include "core.bind" (dict "name" "data-sync" "namespace" "v2b" "role" "Role" "roleName" "data-sync" "account" (list "v2b" "data-sync")) }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: v2b-data-sync
+  namespace: {{ required "core.flux.namespace is not set" $flux.namespace }}
+rules:
+- apiGroups: [helm.toolkit.fluxcd.io]
+  resources: [helmreleases]
+  resourceNames: [{{ required "core.flux.release is not set" $flux.release | quote }}]
+  verbs: [get, watch]
+---
+{{ include "core.bind" (dict "name" "v2b-data-sync" "namespace" $flux.namespace "role" "Role" "roleName" "v2b-data-sync" "account" (list "v2b" "data-sync")) }}

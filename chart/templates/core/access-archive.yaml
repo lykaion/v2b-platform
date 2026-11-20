@@ -1,0 +1,36 @@
+{{- /*
+The archive's access (chart-and-policy.md, who may do what): it reads the Connections and writes their
+status, reads the Secrets of its own namespace, and asks the cluster whose a caller's token is and what
+it may call. Nothing else, and no Lease.
+*/ -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: archive
+  namespace: v2b-archive
+rules:
+- apiGroups: [v2b.aliz.show]
+  resources: [connections]
+  verbs: [get, list, watch]
+- apiGroups: [v2b.aliz.show]
+  resources: [connections/status]
+  verbs: [update, patch]
+- apiGroups: [""]
+  resources: [secrets]
+  verbs: [get, list, watch]
+---
+{{ include "core.bind" (dict "name" "archive" "namespace" "v2b-archive" "role" "Role" "roleName" "archive" "account" (list "v2b-archive" "archive")) }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: v2b-archive-reviews
+rules:
+- apiGroups: [authentication.k8s.io]
+  resources: [tokenreviews]
+  verbs: [create]
+- apiGroups: [authorization.k8s.io]
+  resources: [subjectaccessreviews]
+  verbs: [create]
+---
+{{ include "core.bind" (dict "name" "v2b-archive-reviews" "role" "ClusterRole" "roleName" "v2b-archive-reviews" "account" (list "v2b-archive" "archive")) }}

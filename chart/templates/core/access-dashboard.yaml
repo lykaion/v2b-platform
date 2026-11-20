@@ -1,0 +1,100 @@
+{{- /*
+The dashboard's access, used from the Mac: it reads and writes the three kinds' wanted halves and reads
+their status through the object; creates, replaces and deletes the keys' Secrets in v2b-archive; creates
+Secrets in v2b, which v2b-dashboard-secret-names holds to Claude's sign-in code, and replaces that one;
+never gets, lists or watches a Secret; reads the workloads, their pods, logs and events in both
+namespaces and the cluster's nodes; reads Flux's release object and changes the release's two settings,
+each by name; opens a port-forward to the archive; and requests a token for itself and no other.
+*/ -}}
+{{- $flux := .Values.core.flux -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dashboard
+  namespace: v2b-archive
+rules:
+- apiGroups: [v2b.aliz.show]
+  resources: [connections]
+  verbs: [create, get, list, watch, update, delete]
+- apiGroups: [""]
+  resources: [secrets]
+  verbs: [create, update, delete]
+- apiGroups: [""]
+  resources: [pods/portforward]
+  verbs: [create]
+---
+{{ include "core.bind" (dict "name" "dashboard" "namespace" "v2b-archive" "role" "Role" "roleName" "dashboard" "account" (list "v2b" "dashboard")) }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dashboard
+  namespace: v2b
+rules:
+- apiGroups: [v2b.aliz.show]
+  resources: [agents, datarepositories]
+  verbs: [create, get, list, watch, update, delete]
+- apiGroups: [""]
+  resources: [secrets]
+  verbs: [create]
+- apiGroups: [""]
+  resources: [secrets]
+  resourceNames: [{{ required "core.claudeCode is not set" .Values.core.claudeCode | quote }}]
+  verbs: [update]
+- apiGroups: [""]
+  resources: [serviceaccounts/token]
+  resourceNames: [dashboard]
+  verbs: [create]
+---
+{{ include "core.bind" (dict "name" "dashboard" "namespace" "v2b" "role" "Role" "roleName" "dashboard" "account" (list "v2b" "dashboard")) }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: v2b-dashboard-workloads
+rules:
+- apiGroups: [""]
+  resources: [pods, pods/log, events]
+  verbs: [get, list, watch]
+- apiGroups: [apps]
+  resources: [deployments, replicasets]
+  verbs: [get, list, watch]
+- apiGroups: [batch]
+  resources: [jobs, cronjobs]
+  verbs: [get, list, watch]
+{{- range list "v2b" "v2b-archive" }}
+---
+{{ include "core.bind" (dict "name" "dashboard-workloads" "namespace" . "role" "ClusterRole" "roleName" "v2b-dashboard-workloads" "account" (list "v2b" "dashboard")) }}
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: v2b-dashboard-nodes
+rules:
+- apiGroups: [""]
+  resources: [nodes]
+  verbs: [get, list, watch]
+---
+{{ include "core.bind" (dict "name" "v2b-dashboard-nodes" "role" "ClusterRole" "roleName" "v2b-dashboard-nodes" "account" (list "v2b" "dashboard")) }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: v2b-dashboard
+  namespace: {{ required "core.flux.namespace is not set" $flux.namespace }}
+rules:
+- apiGroups: [helm.toolkit.fluxcd.io]
+  resources: [helmreleases]
+  resourceNames: [{{ required "core.flux.release is not set" $flux.release | quote }}]
+  verbs: [get, watch]
+- apiGroups: [source.toolkit.fluxcd.io]
+  resources: [ocirepositories]
+  resourceNames: [{{ required "core.flux.source is not set" $flux.source | quote }}]
+  verbs: [get, update, patch]
+- apiGroups: [""]
+  resources: [configmaps]
+  resourceNames: [{{ required "core.flux.settings is not set" $flux.settings | quote }}]
+  verbs: [get, update, patch]
+---
+{{ include "core.bind" (dict "name" "v2b-dashboard" "namespace" $flux.namespace "role" "Role" "roleName" "v2b-dashboard" "account" (list "v2b" "dashboard")) }}

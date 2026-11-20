@@ -1,0 +1,38 @@
+{{- /*
+The agent's controller's access: it reads the Agent and writes its status; reads and deletes Claude's
+sign-in code, by name; writes the agent's settings, by name; reads the agent's workloads and their pods,
+and restarts Claude's Deployment by patching it, by name. It execs into no pod, lists no Secret, and
+holds no Lease.
+*/ -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: agent-controller
+  namespace: v2b
+rules:
+- apiGroups: [v2b.aliz.show]
+  resources: [agents]
+  verbs: [get, list, watch]
+- apiGroups: [v2b.aliz.show]
+  resources: [agents/status]
+  verbs: [update, patch]
+- apiGroups: [""]
+  resources: [secrets]
+  resourceNames: [{{ required "core.claudeCode is not set" .Values.core.claudeCode | quote }}]
+  verbs: [get, delete]
+- apiGroups: [""]
+  resources: [configmaps]
+  resourceNames: [{{ include "v2b.agentSettings.name" . | quote }}]
+  verbs: [get, update, patch]
+- apiGroups: [apps]
+  resources: [deployments, replicasets]
+  verbs: [get, list, watch]
+- apiGroups: [""]
+  resources: [pods]
+  verbs: [get, list, watch]
+- apiGroups: [apps]
+  resources: [deployments]
+  resourceNames: [{{ include "v2b.claude.name" . | quote }}]
+  verbs: [patch]
+---
+{{ include "core.bind" (dict "name" "agent-controller" "namespace" "v2b" "role" "Role" "roleName" "agent-controller" "account" (list "v2b" "agent-controller")) }}

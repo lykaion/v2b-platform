@@ -44,3 +44,60 @@ core:
   # True only on a local k3s with the stand-in platforms in the namespace v2b-standins: one policy more
   # lets v2b/calls-internet reach that namespace. False in every release.
   standinPlatforms: false
+
+  # The Secret the dashboard writes Claude's sign-in code to and the agent's controller reads and
+  # deletes. Held equal to internal/kinds/v1alpha1's ClaudeCodeSecret.
+  claudeCode: claude-code
+
+  # Flux's objects the access rules name, all in one namespace. Held equal to internal/contract/release's
+  # constants.
+  flux:
+    namespace: flux-system
+    # The HelmRelease the release is, read by the dashboard and data sync.
+    release: v2b
+    # Flux's source for the chart, whose channel the dashboard changes.
+    source: v2b
+    # The ConfigMap the release reads its values from, whose time zone the dashboard changes.
+    settings: v2b-settings
+
+  # Who may call which archive route: operation to callers, each caller a ServiceAccount of v2b, from
+  # archive-api.md's table. Each caller gets one ClusterRole posting to /archive/v1/<operation> for its
+  # operations; a route named here by no one is refused to everyone.
+  archiveRoutes:
+    status: [agent, dashboard]
+    sources: [agent, dashboard]
+    sync: [agent, dashboard]
+    list: [dashboard]
+    copies: [dashboard]
+    listed: [dashboard]
+    filed: [dashboard]
+    word: [data-sync]
+    take_word: [data-sync]
+    record: [agent, dreamer]
+    declare: [agent]
+    businesses: [agent, dashboard]
+    involved: [agent]
+    history: [agent]
+    thread: [agent]
+    raw: [agent]
+    query: [agent]
+    people: [agent]
+    own: [agent]
+    needs: [agent]
+    declarations: [agent]
+    source_status: [agent]
+    briefing: [agent]
+    search_utterances: [agent]
+    erase: [agent]
+    business_make: [agent]
+    business_rename: [agent]
+    person_make: [agent]
+    person_rename: [agent]
+    link_account: [agent]
+    unlink_account: [agent]
+    link_person_business: [agent]
+    unlink_person_business: [agent]
+    assignment_set: [agent]
+    assignment_remove: [agent]
+    own_keep: [agent]
+    own_forget: [agent]

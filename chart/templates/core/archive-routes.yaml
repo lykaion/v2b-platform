@@ -1,0 +1,35 @@
+{{- /*
+Who may call which archive route (chart-and-policy.md): one ClusterRole per caller, posting to
+/archive/v1/<operation> for each operation core.archiveRoutes gives it, bound to its ServiceAccount in
+v2b. The archive asks the cluster by a SubjectAccessReview on the route; a route no caller is given is
+refused to everyone. A caller that is not one of v2b's ServiceAccounts that call the archive fails the
+render.
+*/ -}}
+{{- $routes := required "core.archiveRoutes is not set" .Values.core.archiveRoutes -}}
+{{- $known := list "agent" "dreamer" "data-sync" "dashboard" -}}
+{{- $callers := list -}}
+{{- range $op, $who := $routes -}}
+{{- range $who -}}
+{{- if not (has . $known) -}}
+{{- fail (printf "core.archiveRoutes.%s: %q is not a caller of the archive; the callers are %s" $op . (join ", " $known)) -}}
+{{- end -}}
+{{- $callers = append $callers . -}}
+{{- end -}}
+{{- end -}}
+{{- range $caller := $callers | uniq | sortAlpha }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: v2b-archive-routes-{{ $caller }}
+rules:
+- nonResourceURLs:
+  {{- range $op, $who := $routes }}
+  {{- if has $caller $who }}
+  - /archive/v1/{{ $op }}
+  {{- end }}
+  {{- end }}
+  verbs: [post]
+---
+{{ include "core.bind" (dict "name" (printf "v2b-archive-routes-%s" $caller) "role" "ClusterRole" "roleName" (printf "v2b-archive-routes-%s" $caller) "account" (list "v2b" $caller)) }}
+{{- end }}
