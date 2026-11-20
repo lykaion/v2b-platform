@@ -1,0 +1,14 @@
+{{- /* Data sync's own volume: its key, its history and its records. Kept on uninstall, since losing it
+loses the key and the history; mounted by data sync's pod alone. */ -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-sync
+  namespace: v2b
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi

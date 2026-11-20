@@ -130,3 +130,10 @@ core:
     assignment_remove: [agent]
     own_keep: [agent]
     own_forget: [agent]
+
+dataSync:
+  # The stand-in GitHub, set only on a local k3s with the stand-ins: its SSH address (host:port) and its
+  # host key in authorized_keys form. Empty in every release; an address with no host key fails the render.
+  standinGitHub:
+    address: ""
+    hostKey: ""
