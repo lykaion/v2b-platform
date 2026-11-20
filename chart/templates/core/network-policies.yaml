@@ -89,6 +89,28 @@ spec:
         - {{ $net.podRange }}
         - {{ $net.serviceRange }}
         - {{ printf "%s/32" $node }}
+{{- if $.Values.core.standinPlatforms }}
+---
+{{- /*
+On a local k3s only: every pod labelled v2b/calls-internet, the platforms' callers in either namespace,
+reaches the stand-in platforms in v2b-standins, and nothing else inside.
+*/}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: calls-standins
+  namespace: {{ . }}
+spec:
+  podSelector:
+    matchLabels:
+      v2b/calls-internet: "true"
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: v2b-standins
+{{- end }}
 {{- end }}
 ---
 {{- /* The archive accepts from pods labelled v2b/calls-archive, in either namespace, and no other. */}}
@@ -110,25 +132,3 @@ spec:
           v2b/calls-archive: "true"
     ports:
     - {protocol: TCP, port: {{ $port }}}
-{{- if .Values.core.standinPlatforms }}
----
-{{- /*
-On a local k3s only: the archive's pods labelled v2b/calls-internet, the platforms' callers, reach the
-stand-in platforms in v2b-standins, and nothing else inside.
-*/}}
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: calls-standins
-  namespace: v2b-archive
-spec:
-  podSelector:
-    matchLabels:
-      v2b/calls-internet: "true"
-  policyTypes: [Egress]
-  egress:
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: v2b-standins
-{{- end }}

@@ -70,8 +70,9 @@ core:
   # Node. With neither, the render fails.
   nodeAddress: ""
 
-  # True only on a local k3s with the stand-in platforms in the namespace v2b-standins: one policy more
-  # lets v2b/calls-internet reach that namespace. False in every release.
+  # True only on a local k3s with the stand-in platforms in the namespace v2b-standins: one rule more,
+  # rendered in each of the chart's two namespaces, v2b and v2b-archive, lets every pod labelled
+  # v2b/calls-internet reach that namespace. False in every release.
   standinPlatforms: false
 
   # The Secret the dashboard writes Claude's sign-in code to and the agent's controller reads and
