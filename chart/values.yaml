@@ -143,3 +143,10 @@ dataSync:
   standinGitHub:
     address: ""
     hostKey: ""
+
+dreamers:
+  # Each dreamer's CronJob schedule, in the server's time zone.
+  schedules:
+    summaries: "30 3 * * *"
+    ledger: "*/10 * * * *"
+    digest: "30 5 * * 1"

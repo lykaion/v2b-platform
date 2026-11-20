@@ -1,0 +1,29 @@
+{{- /* The three dreamers, one CronJob each, in the server's time zone; the design's table. */ -}}
+{{- $dreamers := list
+  (dict "component" "summaries" "command" (list "v2b" "summarize") "archive" true "active" 10800 "starting" 21600)
+  (dict "component" "ledger" "command" (list "v2b" "ledger" "--if-due" "--quiet" "5m") "archive" false "active" 3600 "starting" 300)
+  (dict "component" "digest" "command" (list "v2b" "digest") "archive" true "active" 3600 "starting" 86400)
+-}}
+{{- range $dreamers }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .component }}
+  namespace: v2b
+  labels:
+    {{- include "v2b.labels" (dict "root" $ "component" .component) | nindent 4 }}
+spec:
+  schedule: {{ index $.Values.dreamers.schedules .component | quote }}
+  timeZone: {{ include "v2b.timezone" $ | quote }}
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: {{ .starting }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: {{ .active }}
+      template:
+        {{- include "dreamers.pod" (dict "root" $ "component" .component "command" .command "archive" .archive) | nindent 8 }}
+{{- end }}
