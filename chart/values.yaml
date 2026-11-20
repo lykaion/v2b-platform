@@ -137,6 +137,24 @@ archive:
   # The stand-in platforms' addresses, platform to address, rendered only beside core.standinPlatforms.
   platformAddresses: {}
 
+agent:
+  # The agent's volume's size, on k3s's local-path class.
+  volumeSize: 10Gi
+  # Claude's pod: its processes idle at 450 MiB and reach 655 MiB beside a dreamer's peak.
+  claude:
+    resources:
+      requests:
+        memory: 600Mi
+      limits:
+        memory: 1536Mi
+  # The agent's controller: a login runs claude.
+  controller:
+    resources:
+      requests:
+        memory: 64Mi
+      limits:
+        memory: 512Mi
+
 dataSync:
   # The stand-in GitHub, set only on a local k3s with the stand-ins: its SSH address (host:port) and its
   # host key in authorized_keys form. Empty in every release; an address with no host key fails the render.

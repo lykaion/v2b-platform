@@ -1,0 +1,9 @@
+{{- /*
+The agent's settings: one key, managed-settings.json, which the agent's controller writes and Claude's
+pod mounts. Rendered with no data, so an upgrade leaves the controller's key alone.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "v2b.agentSettings.name" . }}
+  namespace: v2b
