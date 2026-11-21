@@ -56,13 +56,19 @@ spec:
                 description: Signature signs the history of what the owner teaches.
                 properties:
                   email:
+                    minLength: 1
                     type: string
                   name:
+                    minLength: 1
                     type: string
+                required:
+                - email
+                - name
                 type: object
             required:
             - account
             - name
+            - signature
             type: object
           status:
             description: DataRepositoryStatus is data sync's half of the DataRepository.
