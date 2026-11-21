@@ -1,8 +1,0 @@
-[Unit]
-Description=V2B update Claude Code, root's copy the agent runs
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/lib/v2b/current/bin/v2b claude-update
