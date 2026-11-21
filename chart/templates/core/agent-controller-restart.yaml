@@ -1,0 +1,75 @@
+{{- /*
+v2b-agent-controller-restart: the access rules let the agent's controller patch Claude's Deployment, by
+name, to restart Claude; they cannot say which fields. This policy refuses any change the controller
+makes to it but the values of the two annotations on its pod template that the restart writes, the
+settings' mark and the last sign-in's time (internal/chart, SettingsAnnotation and SignedInAnnotation).
+The fields the API server sets on any update (managedFields, generation, resourceVersion) are left
+alone; the status subresource and every other user are not matched.
+*/ -}}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: v2b-agent-controller-restart
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: v2b
+    resourceRules:
+    - apiGroups: [apps]
+      apiVersions: [v1]
+      operations: [UPDATE]
+      resources: [deployments]
+      resourceNames: [{{ include "v2b.claude.name" . | quote }}]
+  matchConditions:
+  - name: by-the-agent-controller
+    expression: request.userInfo.username == "system:serviceaccount:v2b:agent-controller"
+  variables:
+  - name: restartAnnotations
+    expression: "['v2b.aliz.show/settings', 'v2b.aliz.show/signed-in']"
+  - name: serverSet
+    expression: "['managedFields', 'generation', 'resourceVersion']"
+  - name: annotations
+    expression: "has(object.spec.template.metadata.annotations) ? object.spec.template.metadata.annotations : {}"
+  - name: oldAnnotations
+    expression: "has(oldObject.spec.template.metadata.annotations) ? oldObject.spec.template.metadata.annotations : {}"
+  validations:
+  - expression: >-
+      object.all(k, k in ['metadata', 'spec'] || (k in oldObject && object[k] == oldObject[k])) &&
+      oldObject.all(k, k in ['metadata', 'spec'] || k in object)
+    message: the agent's controller changes nothing of Claude's Deployment but its pod template's restart annotations
+    reason: Forbidden
+  - expression: >-
+      object.metadata.all(k, k in variables.serverSet || (k in oldObject.metadata && object.metadata[k] == oldObject.metadata[k])) &&
+      oldObject.metadata.all(k, k in variables.serverSet || k in object.metadata)
+    message: the agent's controller changes nothing of Claude's Deployment's metadata
+    reason: Forbidden
+  - expression: >-
+      object.spec.all(k, k == 'template' || (k in oldObject.spec && object.spec[k] == oldObject.spec[k])) &&
+      oldObject.spec.all(k, k == 'template' || k in object.spec)
+    message: the agent's controller changes nothing of Claude's Deployment's spec but its pod template's restart annotations
+    reason: Forbidden
+  - expression: >-
+      object.spec.template.all(k, k == 'metadata' || (k in oldObject.spec.template && object.spec.template[k] == oldObject.spec.template[k])) &&
+      oldObject.spec.template.all(k, k == 'metadata' || k in object.spec.template)
+    message: the agent's controller changes nothing of Claude's pod but its restart annotations
+    reason: Forbidden
+  - expression: >-
+      object.spec.template.metadata.all(k, k == 'annotations' || (k in oldObject.spec.template.metadata && object.spec.template.metadata[k] == oldObject.spec.template.metadata[k])) &&
+      oldObject.spec.template.metadata.all(k, k == 'annotations' || k in object.spec.template.metadata)
+    message: the agent's controller changes nothing of Claude's pod template's metadata but its restart annotations
+    reason: Forbidden
+  - expression: >-
+      variables.annotations.all(k, k in variables.restartAnnotations || (k in variables.oldAnnotations && variables.annotations[k] == variables.oldAnnotations[k])) &&
+      variables.oldAnnotations.all(k, k in variables.annotations)
+    message: the agent's controller sets the values of its restart annotations on Claude's pod template and changes no other
+    reason: Forbidden
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: v2b-agent-controller-restart
+spec:
+  policyName: v2b-agent-controller-restart
+  validationActions: [Deny]

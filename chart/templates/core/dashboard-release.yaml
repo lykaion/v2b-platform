@@ -1,0 +1,83 @@
+{{- /*
+v2b-dashboard-release: the access rules let the dashboard update and patch Flux's source for the chart,
+by name, to set the release channel (release.md); they cannot say which fields. This policy refuses any
+change the dashboard makes to it but spec.ref.semver set to one of the two channels' ranges
+(release.ChannelRange) and the annotation asking Flux to reconcile now (release.RequestedAt). The fields
+the API server sets on any update (managedFields, generation, resourceVersion) are left alone; the
+status subresource and every other user are not matched.
+*/ -}}
+{{- $flux := .Values.core.flux -}}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: v2b-dashboard-release
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: {{ required "core.flux.namespace is not set" $flux.namespace }}
+    resourceRules:
+    - apiGroups: [source.toolkit.fluxcd.io]
+      apiVersions: ["*"]
+      operations: [UPDATE]
+      resources: [ocirepositories]
+      resourceNames: [{{ required "core.flux.source is not set" $flux.source | quote }}]
+  matchConditions:
+  - name: by-the-dashboard
+    expression: request.userInfo.username == "system:serviceaccount:v2b:dashboard"
+  variables:
+  - name: channelRanges
+    expression: "['>=0.1.0', '>=0.1.0-0']"
+  - name: requestedAt
+    expression: "'reconcile.fluxcd.io/requestedAt'"
+  - name: serverSet
+    expression: "['managedFields', 'generation', 'resourceVersion']"
+  - name: annotations
+    expression: "has(object.metadata.annotations) ? object.metadata.annotations : {}"
+  - name: oldAnnotations
+    expression: "has(oldObject.metadata.annotations) ? oldObject.metadata.annotations : {}"
+  - name: ref
+    expression: "has(object.spec.ref) ? object.spec.ref : {}"
+  - name: oldRef
+    expression: "has(oldObject.spec.ref) ? oldObject.spec.ref : {}"
+  validations:
+  - expression: >-
+      object.all(k, k in ['metadata', 'spec'] || (k in oldObject && object[k] == oldObject[k])) &&
+      oldObject.all(k, k in ['metadata', 'spec'] || k in object)
+    message: the dashboard changes nothing of Flux's source for the chart but its channel and its request to reconcile now
+    reason: Forbidden
+  - expression: >-
+      object.metadata.all(k, k in variables.serverSet || k == 'annotations' || (k in oldObject.metadata && object.metadata[k] == oldObject.metadata[k])) &&
+      oldObject.metadata.all(k, k in variables.serverSet || k == 'annotations' || k in object.metadata)
+    message: the dashboard changes nothing of the source's metadata but its request to reconcile now
+    reason: Forbidden
+  - expression: >-
+      variables.annotations.all(k, k == variables.requestedAt || (k in variables.oldAnnotations && variables.annotations[k] == variables.oldAnnotations[k])) &&
+      variables.oldAnnotations.all(k, k in variables.annotations)
+    message: the dashboard sets the source's request to reconcile now and changes no other annotation
+    reason: Forbidden
+  - expression: >-
+      object.spec.all(k, k == 'ref' || (k in oldObject.spec && object.spec[k] == oldObject.spec[k])) &&
+      oldObject.spec.all(k, k == 'ref' || k in object.spec)
+    message: the dashboard changes nothing of the source's spec but its channel
+    reason: Forbidden
+  - expression: >-
+      variables.ref.all(k, k == 'semver' || (k in variables.oldRef && variables.ref[k] == variables.oldRef[k])) &&
+      variables.oldRef.all(k, k == 'semver' || k in variables.ref)
+    message: the dashboard changes nothing of the source's ref but its channel's range
+    reason: Forbidden
+  - expression: >-
+      'semver' in variables.ref
+      ? variables.ref.semver in variables.channelRanges || ('semver' in variables.oldRef && variables.oldRef.semver == variables.ref.semver)
+      : !('semver' in variables.oldRef)
+    message: the dashboard sets the source's range to a channel's range and to nothing else
+    reason: Forbidden
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: v2b-dashboard-release
+spec:
+  policyName: v2b-dashboard-release
+  validationActions: [Deny]
