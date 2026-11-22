@@ -103,6 +103,13 @@ spec:
                 required:
                 - secret
                 type: object
+              mailbox:
+                description: Mailbox is which kind a mailbox is, one of the model's
+                  MailboxKinds; empty elsewhere.
+                enum:
+                - gmail
+                - hosted
+                type: string
               places:
                 description: 'Places is which places to copy: Chosen false, the platform''s
                   own default.'
@@ -128,8 +135,9 @@ spec:
                 - mail
                 type: string
               reach:
-                description: Reach is a mailbox's host, port, STARTTLS and user; empty
-                  elsewhere.
+                description: |-
+                  Reach is a hosted mailbox's host, port and STARTTLS, and any mailbox's user; empty elsewhere.
+                  A Gmail mailbox's host and port are its kind's own and are not written here.
                 properties:
                   name:
                     type: string
