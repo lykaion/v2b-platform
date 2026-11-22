@@ -66,8 +66,9 @@ core:
     # What v2b/calls-internet never reaches, beside the two ranges above and the node.
     privateRanges: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16]
 
-  # The node's address, used only where the render reaches no cluster: there it is read from the one
-  # Node. With neither, the render fails.
+  # The node's IPv4 address, used only where the render reaches no cluster: there it is the one Node's
+  # IPv4 InternalIP. The pod network is IPv4 alone, so an IPv6 address here fails the render; with
+  # neither, the render fails.
   nodeAddress: ""
 
   # True only on a local k3s with the stand-in platforms in the namespace v2b-standins: one rule more,

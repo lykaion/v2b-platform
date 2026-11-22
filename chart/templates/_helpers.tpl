@@ -210,24 +210,45 @@ v2b/calls-{{ . }}: "true"
 {{- end -}}
 
 {{- /*
-v2b.nodeAddress: the node's address, the InternalIP of the cluster's one Node read by lookup, else
-core.nodeAddress; with neither, or with more than one Node, the render fails, so no open rule is ever
-rendered.
+v2b.nodeAddress: the node's IPv4 address, chosen by v2b.nodeAddress.choose from the cluster's Nodes as
+lookup reads them.
 */ -}}
 {{- define "v2b.nodeAddress" -}}
-{{- $nodes := (lookup "v1" "Node" "" "").items | default list -}}
+{{- include "v2b.nodeAddress.choose" (list . ((lookup "v1" "Node" "" "").items | default list)) -}}
+{{- end -}}
+
+{{- /*
+v2b.nodeAddress.choose: (list . <nodes>), the node's address the rules name: the IPv4 InternalIP of the
+one Node, whatever the order of its addresses, else core.nodeAddress. The pod network is IPv4 alone, so an
+IPv6 address is never chosen, and core.nodeAddress given as one fails the render. With no address, or with
+more than one Node, the render fails, so no open rule is ever rendered. A Node answering lookup comes in
+here, so a render with no cluster feeds it a list of Nodes of its own.
+*/ -}}
+{{- define "v2b.nodeAddress.choose" -}}
+{{- $root := index . 0 -}}
+{{- $nodes := index . 1 -}}
+{{- $ipv4 := `^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$` -}}
 {{- if gt (len $nodes) 1 -}}
 {{- fail (printf "the cluster has %d nodes; the chart is for one" (len $nodes)) -}}
 {{- end -}}
 {{- $address := "" -}}
 {{- range $nodes -}}
 {{- range .status.addresses -}}
-{{- if eq .type "InternalIP" -}}{{- $address = .address -}}{{- end -}}
+{{- if and (eq .type "InternalIP") (not $address) (regexMatch $ipv4 .address) -}}{{- $address = .address -}}{{- end -}}
 {{- end -}}
 {{- end -}}
-{{- if not $address -}}{{- $address = .Values.core.nodeAddress -}}{{- end -}}
 {{- if not $address -}}
-{{- fail "the node's address: no Node answered lookup and core.nodeAddress is not set" -}}
+{{- $given := $root.Values.core.nodeAddress | default "" | toString -}}
+{{- if and $given (contains ":" $given) -}}
+{{- fail (printf "the node's address: core.nodeAddress %q is an IPv6 address; the rules need the node's IPv4 address" $given) -}}
+{{- end -}}
+{{- if and $given (not (regexMatch $ipv4 $given)) -}}
+{{- fail (printf "the node's address: core.nodeAddress %q is not an IPv4 address" $given) -}}
+{{- end -}}
+{{- $address = $given -}}
+{{- end -}}
+{{- if not $address -}}
+{{- fail "the node's address: no Node answered lookup with an IPv4 InternalIP and core.nodeAddress is not set" -}}
 {{- end -}}
 {{- $address -}}
 {{- end -}}
