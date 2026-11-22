@@ -102,6 +102,7 @@ core:
     copies: [dashboard]
     listed: [dashboard]
     filed: [dashboard]
+    passes: [dashboard]
     word: [data-sync]
     take_word: [data-sync]
     record: [agent, dreamer]
