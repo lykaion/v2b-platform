@@ -113,7 +113,7 @@ spec:
 {{- end }}
 {{- end }}
 ---
-{{- /* The archive accepts from pods labelled v2b/calls-archive, in either namespace, and no other. */}}
+{{- /* The archive accepts from pods labelled v2b/calls-archive, in either of the two namespaces, and no other. */}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -126,7 +126,9 @@ spec:
   policyTypes: [Ingress]
   ingress:
   - from:
-    - namespaceSelector: {}
+    - namespaceSelector:
+        matchExpressions:
+        - {key: kubernetes.io/metadata.name, operator: In, values: [v2b, v2b-archive]}
       podSelector:
         matchLabels:
           v2b/calls-archive: "true"
