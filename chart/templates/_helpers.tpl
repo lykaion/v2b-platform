@@ -227,7 +227,7 @@ here, so a render with no cluster feeds it a list of Nodes of its own.
 {{- define "v2b.nodeAddress.choose" -}}
 {{- $root := index . 0 -}}
 {{- $nodes := index . 1 -}}
-{{- $ipv4 := `^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$` -}}
+{{- $ipv4 := `^((25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])$` -}}
 {{- if gt (len $nodes) 1 -}}
 {{- fail (printf "the cluster has %d nodes; the chart is for one" (len $nodes)) -}}
 {{- end -}}
