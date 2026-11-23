@@ -47,40 +47,6 @@ spec:
           spec:
             description: ConnectionSpec is the wanted half of a Connection.
             properties:
-              acceptedTraces:
-                description: AcceptedTraces is what the owner accepted others may
-                  see.
-                items:
-                  description: VisibleTrace is a sign of V2B's access that someone
-                    on the platform can see, and who can see it.
-                  properties:
-                    kind:
-                      description: VisibleTraceKind is one kind of sign of V2B's access
-                        that someone on a platform can see.
-                      enum:
-                      - a new sign-in notice
-                      - an app installed
-                      - a bot joined as a member
-                      - third-party access granted
-                      - a message marked read
-                      - the owner shown online
-                      - typing shown
-                      - a reaction added
-                      type: string
-                    visible_to:
-                      description: TraceAudience is who on the platform can see a
-                        trace.
-                      enum:
-                      - the owner alone
-                      - the workspace's admins
-                      - the members of the place
-                      - everyone
-                      type: string
-                  required:
-                  - kind
-                  - visible_to
-                  type: object
-                type: array
               account:
                 description: Account is the account's identity on its platform.
                 type: string
