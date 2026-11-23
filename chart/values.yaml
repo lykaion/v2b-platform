@@ -81,7 +81,7 @@ core:
   claudeCode: claude-code
 
   # Flux's objects the access rules name, all in one namespace. Held equal to internal/contract/release's
-  # constants.
+  # DefaultFluxNames, the names a program gives every component that reads or writes them.
   flux:
     namespace: flux-system
     # The HelmRelease the release is, read by the dashboard and data sync.
