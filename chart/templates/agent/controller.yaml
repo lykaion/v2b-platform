@@ -1,7 +1,9 @@
 {{- /*
 The agent's controller (agent.md, The controller): the Agent reconciled into the settings key and
-Claude's Deployment, and Claude's sign-in run in its own pod. It mounts the sign-in's directory as the
-workspace's table gives its role; its own claude keeps its configuration and home in /tmp, set in Go.
+Claude's Deployment, and Claude's sign-in run in its own pod. It mounts the sign-in's directory and the
+account's as the workspace's table gives its role; its own claude keeps its configuration in the
+account's directory, where Claude's pod reads the account's details a login writes, and its home in
+/tmp, both set in Go.
 */ -}}
 apiVersion: apps/v1
 kind: Deployment

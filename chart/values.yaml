@@ -40,6 +40,8 @@ core:
       cells: {claude: writes, summaries: writes, ledger: writes, digest: writes}
     - path: .claude-sign-in
       cells: {claude: uses, agent-controller: uses, summaries: uses, ledger: uses, digest: uses}
+    - path: .claude-account
+      cells: {claude: reads, agent-controller: writes}
     - path: .claude
       cells: {claude: writes}
     - path: .claude/projects
