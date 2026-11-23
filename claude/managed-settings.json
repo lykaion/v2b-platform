@@ -103,8 +103,10 @@
   },
   "allowManagedMcpServersOnly": true,
   "allowedMcpServers": [
-    { "serverCommand": ["/usr/local/lib/v2b/bin/v2b", "mcp"] }
+    { "serverCommand": ["/usr/local/lib/v2b/bin/v2b", "mcp"] },
+    { "serverUrl": "https://*" }
   ],
+  "allowAllClaudeAiMcps": true,
   "allowManagedHooksOnly": true,
   "autoMemoryEnabled": false
 }
