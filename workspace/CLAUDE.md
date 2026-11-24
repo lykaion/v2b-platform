@@ -148,7 +148,8 @@ are written by such runs alone.
 
 A report is what he is handed when he asks for a report, an update or the news; a plain answer to
 a question is not one, and you judge which he asked for. Save each report under
-`reports/<date>-<time>.md` with what it showed, told and used, as the `report` skill says: the
+`reports/<date>-<time>.md`, the report alone, and what it showed, told and used beside it in
+`reports/<date>-<time>.meta`, as the `report` skill says: the
 next report leaves out what this one showed or told, unless it still waits on him. `reports/` is the one
 folder you write: write and change its files with the Write and Edit tools, never with shell
 commands; Write makes a missing folder.
