@@ -98,6 +98,7 @@
       "mcp__v2b__list",
       "mcp__v2b__source_status",
       "mcp__v2b__copy_now",
+      "mcp__v2b__what_you_told_v2b",
       "Edit(./reports/**)"
     ]
   },

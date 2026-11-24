@@ -97,9 +97,9 @@ core:
   # archive-api.md's table. Each caller gets one ClusterRole posting to /archive/v1/<operation> for its
   # operations; a route named here by no one is refused to everyone.
   archiveRoutes:
-    status: [agent, dashboard]
-    sources: [agent, dashboard]
-    sync: [agent, dashboard]
+    status: [agent]
+    sources: [agent]
+    sync: [agent]
     list: [dashboard]
     copies: [dashboard]
     listed: [dashboard]
