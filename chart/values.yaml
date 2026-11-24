@@ -139,7 +139,10 @@ core:
 archive:
   # The archive's volume's size.
   storage: 10Gi
-  # The stand-in platforms' addresses, platform to address, rendered only beside core.standinPlatforms.
+  # The stand-in platforms' addresses, rendered only beside core.standinPlatforms: one line of the
+  # archive's platform-addresses.env each, key to value. The keys are those the model gives: slack,
+  # discord and granola, each an http or https address; telegram (host:port) with telegram.key;
+  # mail.gmail and mail.hosted (host:port) with mail.certificate.
   platformAddresses: {}
 
 agent:

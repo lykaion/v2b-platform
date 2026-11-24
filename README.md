@@ -160,10 +160,12 @@ not read is left where it is and named once in the install log. After the move n
 read again.
 
 `/etc/v2b/archive/platform-addresses.env` stays, on a test server only: `slack`, `discord` and
-`granola`, each the address of a stand-in for that platform, read in place of the platform's own.
-It is read once, when the service starts, and only when `root` owns it and no one else can write
-it; a file refused is said in the journal and the status, and those three platforms copy nothing
-until it is put right. Every face of the status says which platforms a stand-in serves. The reads
+`granola`, each the address of a stand-in for that platform, and `telegram` with `telegram.key`,
+`mail.gmail` and `mail.hosted` with `mail.certificate`, the host and port of a stand-in Telegram
+and of the stand-in mail servers with what each proves itself by, read in place of the platform's
+own. It is read once, when the service starts, and only when `root` owns it and no one else can
+write it; a file refused is said in the journal and the status, and those five platforms copy
+nothing until it is put right. Every face of the status says which platforms a stand-in serves. The reads
 allowed for each platform are the same whatever its address.
 
 Only the service opens the database, holding its lock in `/var/lib/v2b/archive/`, and it writes
