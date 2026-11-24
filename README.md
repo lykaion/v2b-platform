@@ -192,7 +192,8 @@ All of these are root's: the assistant reads them and cannot change them. Claude
 `managed-mcp.json` names the one tool server the assistant's sessions load, `v2b mcp`: it runs
 as the `v2b-agent` user and asks the archive service over the same socket as the commands. The
 managed settings allow each of its tools by name, so a call to one runs with no prompt and no
-review, and allow no other server.
+review. No other server is defined on the host; the owner's claude.ai connections reach the
+assistant beside it, through `allowAllClaudeAiMcps` and an allowlist entry for remote servers.
 
 ## The door to the assistant
 
