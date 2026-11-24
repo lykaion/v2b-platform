@@ -44,8 +44,10 @@ in the way that fits it.
 
 ## Saving it
 
-Save every report under `reports/<date>-<time>.md`, such as `reports/2026-11-19-0930.md`, with the
-Write tool, as he was handed it, after a header the next report and the ledger read:
+Save every report as two files with the Write tool, the second first. `reports/<date>-<time>.md`,
+such as `reports/2026-11-19-0930.md`, holds the report alone, as he was handed it: it is the file he
+opens. Beside it, `reports/<date>-<time>.meta`, such as `reports/2026-11-19-0930.meta`, holds the
+lines the next report and the ledger read:
 
 ```
 at: 2026-11-19 09:30
@@ -54,8 +56,6 @@ to: 2026-11-19 09:30
 showed: po-2231, oven-repair
 told: slack/T123/C456/1731.0002
 used: summaries/2026-11-18/slack-T123-C456, slack/T123/C456/1731.0001
-
-(the report as he was handed it)
 ```
 
 - `at` is when you gave it, `from` and `to` the period it covers, in his time zone.
@@ -66,6 +66,8 @@ used: summaries/2026-11-18/slack-T123-C456, slack/T123/C456/1731.0001
   `showed` or `told`.
 - `used` is every summary (its path without `.md`) and every message (its reference, as the tools
   print it) a point of the report rests on. What a report used is no longer new to the next.
-- A blank line ends the header. One value per line also works: `showed: po-2231` twice.
+- One value per line also works: `showed: po-2231` twice.
+- A report saved earlier with these lines at the top of its own file still reads; save new ones as
+  two files.
 
 He asks for nothing of this: it is how the next report knows what he has seen.
