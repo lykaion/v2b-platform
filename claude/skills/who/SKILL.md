@@ -1,6 +1,6 @@
 ---
 name: who
-description: Working out who a person is across platforms and what they do for the owner. Use when he asks who someone is, what someone said or is doing, or when a name in a question may be one person under several names.
+description: Works out who a person is across platforms and what they do for you. For when you ask who someone is, what someone said or is doing, or when one name in a question may be one person under several names.
 ---
 
 # Who a person is

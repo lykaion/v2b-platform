@@ -1,6 +1,6 @@
 ---
 name: keep
-description: Keeping what the owner teaches about himself, his businesses, people and terms in context/. Use when he tells you something that should still hold next time, or corrects you.
+description: Keeps what you teach V2B about yourself, your businesses, people and terms, so it still holds next time. For when you tell the agent something it should remember, or correct it.
 ---
 
 # Keeping what he teaches

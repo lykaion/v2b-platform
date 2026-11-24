@@ -1,6 +1,6 @@
 ---
 name: report
-description: What makes a report or an update useful to the owner, and how it is saved. Use when he asks for a report, an update, the news, a catch-up on everything, or runs /report.
+description: Gives you a report or an update that is useful to you, and saves it. For when you ask for a report, an update, the news or a catch-up on everything, or run /report.
 ---
 
 # Reports

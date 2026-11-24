@@ -1,6 +1,6 @@
 ---
 name: catch-up
-description: Catching the owner up on one business, project or deal he has not followed. Use when he asks what is going on at a business, how a project or deal stands, or what he missed somewhere.
+description: Catches you up on one business, project or deal you have not followed. For when you ask what is going on at a business, how a project or deal stands, or what you missed somewhere.
 ---
 
 # Catching up on a business
