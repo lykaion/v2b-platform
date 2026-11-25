@@ -45,7 +45,9 @@ in the way that fits it.
 
 ## Saving it
 
-He reads the report in your answer. Save it too, as one file with the Write tool,
+He reads the report in your answer, and only your last message is the answer: save the file
+first, then give him the whole report as your last message, with nothing after it, not even a
+line saying it is done. Save it as one file with the Write tool,
 `reports/<date>-<time>.md`, such as `reports/2026-11-19-0930.md`: the report as he was handed it,
 then, at its end, the lines the next report and the ledger read, inside one comment, which a
 viewer of the file does not show:
