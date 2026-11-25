@@ -10,7 +10,7 @@ a nickname in Cyrillic on Telegram, an address in mail. The briefing lists the p
 declared with where their accounts are; `messages_by_person` reads through every account of theirs.
 
 For anyone not linked yet, look for the same person under other names: the variants of the name
-in both scripts and without diacritics, the handle, the address's local part, the same signature
+in both scripts and without diacritics, the username, the address's local part, the same signature
 or role, the same matter discussed in two places at the same time. Say how sure you are and why
 ("the same person, I think: the Telegram account signs as Stefan and writes about the same
 release the same day"), and offer to remember that the two accounts are one person; record it

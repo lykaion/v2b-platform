@@ -56,13 +56,14 @@ and size; its contents are not copied.
   left out.
 - Mail: each folder you ticked, read without marking anything read or moving anything.
 
-## What the agent may do, and what it asks you first
+## What the agent may do
 
 The agent's settings are part of each version and cannot be changed on your server. Its tools
 that only read, and copying now, run without asking you. The two that change what V2B holds,
-remembering what you said and taking it back, ask you first in the Claude app, each time. The
-agent writes only its own reports and what you ask it to remember, and nothing is ever sent from
-it to any platform.
+remembering what you said and taking it back, run only once Claude's own review of each call (its
+auto mode) lets them, and the agent's orders let them act only on what you said in the
+conversation; you are not asked. The agent writes only its own reports and what you ask it to
+remember, and nothing is ever sent from it to any platform.
 
 ## The agent's tools
 
@@ -78,9 +79,9 @@ What the Claude app shows at each of the agent's calls: its tools, and the comma
 | `list` | Lists every account and conversation V2B copies, and how each copy stands. |
 | `copy_status` | Says which accounts cannot be copied now, and what you do about it. |
 | `copy_now` | Copies an account now, rather than at its next copy. |
-| `remember_what_you_said` | Remembers what you said: a conversation's business, who an account is, a name. Asks you first. |
+| `remember_what_you_said` | Remembers what you said: a conversation's business, who an account is, a name. Only on your words, after Claude's review. |
 | `what_you_told_v2b` | Gives everything V2B holds of what you told it. |
-| `take_back_what_you_told_v2b` | Takes back something you told V2B. Asks you first. |
+| `take_back_what_you_told_v2b` | Takes back something you told V2B. Only on your words, after Claude's review. |
 | `v2b-search` | Searches the messages' text for words or a pattern. |
 | `v2b-day` | Gives one channel's day, or a run of days. |
 | `v2b-dates` | Turns words such as "last week" into the dates they mean. |
