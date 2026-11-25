@@ -1,264 +1,113 @@
-# V2B server
+# V2B on your server
 
-This repository is everything the team puts on your server. Nothing else reaches it: the
-team has no shell there. A change ships as a signed release.
+This is everything V2B puts on your server, as each version of V2B carries it. Nothing else reaches
+your server from the team: the team has no account on it, and its only reach is the version it
+signs.
 
-## How a change arrives
+## How a version of V2B arrives
 
-Every hour, at a moment varied by up to ten minutes, a timer on your server
-(`v2b-update.timer`) runs `v2b server-update`, which looks for a newer release of V2B.
-A release is signed by the team; the server checks the signature against the key built into
-the program and installs nothing that fails it, or whose files do not match the signed list.
-It only ever moves forward: an older release, or the one already installed, changes nothing.
+Your server looks for a newer version of V2B by itself, among the versions you chose on V2B's
+page on your Mac: finished versions only, or versions being tested too. Each version is signed
+by the team, and your server checks that signature against the team's keys it was made with: it
+installs nothing whose signature does not hold, and nothing older than what it runs.
 
-Each release is unpacked whole beside the one running, as a generation under
-`/usr/local/lib/v2b/gen/`, and `/usr/local/lib/v2b/current` is switched to it in one step.
-The system packages listed in `deploy/packages` that the server lacks are installed first, then
-the services, settings and commands that differ from the previous generation, and only the
-services whose files changed are restarted. A new program, or a package installed, restarts
-every kept-running service that runs it, `v2b-archive.service` and
-`v2b-remote-control.service`; a service run by a timer is never restarted, it picks the change
-up on its next run. The archive service counts as up only once it answers on its socket that
-its database is open, which it does after any migration the release adds, waited for up to ten
-minutes. Twenty seconds after, every service the update started must be running and must not
-have restarted on its own; if one is not, the previous generation is put back and restarted,
-held to the same check, and the log says `rolled back`, or `rolled back, not running` when the
-previous generation does not come up either. A release without its `server/` directory, or
-without the update's own service and timer, is refused before anything changes (`refused
-bundle`). The previous generation is kept; older ones are deleted.
+A new version replaces the services whose parts changed. An update that does not come up is tried
+again, and if it still does not, your server goes back to the version it ran before, which keeps
+running; V2B's page on your Mac says so under Updates. You can also ask for an update at once
+there, with Update now.
 
-## The archive service
-The archive service copies your Discord servers, your Telegram chats, your Slack conversations, your mailboxes and your Granola meetings into its database, read-only on the
-platform. The database is `v2b.db` in the service's state directory, owned by the archive service's user;
-the assistant never opens it and asks the service for every read and every write it is allowed.
-A reading is added and never changed: an edit or a deletion is a new reading, and what the
-platform answered is kept as received beside the typed row. Which business a server, channel or
-chat is about is a row of its own, so moving one writes no reading and moves no file.
+## What runs on your server
 
-One service, `v2b-archive.service`, holds every key and runs every mirror. It reads what the owner
-wants from its database when it starts, again whenever it is given a new version, and on
-`systemctl reload v2b-archive`, and holds one connection per source wanted, named by the source:
-`telegram`, `discord`, `granola`, `slack-<name>`, `mail-<name>`. Discord, Granola, mail, Slack and Telegram each get a pass every five minutes, the first a minute after the
-service starts; one connection's pass never overlaps itself, and one that fails is noted in
-that connection's status and tried again five minutes later without stopping any other. If the
-service stops for any reason, systemd starts it again.
+Each part of V2B runs as a service of its own, under the name you see it by on your server, and
+reaches only what it is allowed to:
 
-The service runs fenced, with the lines the agent's service carries: the file system read-only but
-its own state directory, no home directories (the agent's workspace is out of its sight), no
-capability, no new privilege, a filtered set of system calls. Its network stays open, since that
-is how it reads the platforms.
+- **Copying** (`archive`): holds every key you gave V2B, and copies your Slack, Telegram, Discord
+  and mail into V2B's copy on your server, only ever reading on each platform. No other part reads
+  a key or opens the copy: the agent and your Mac ask this service for what they need.
+- **The agent** (`claude`, and `agent-controller`, which signs it in to Claude): Claude Code, which
+  the Claude app on your phone, desktop or the web opens. It answers you from the copy through
+  its tools, below, and sees no key.
+- **Nightly summaries** (`summaries`), **Record of what was agreed** (`ledger`) and **Weekly
+  summary** (`digest`): each reads the copy and writes for the agent: what happened in each busy
+  channel, what you confirmed needs you, and each past week as its reports told it.
+- **Writing to the repository** (`data-sync`): keeps what you told V2B in your own private
+  repository on GitHub, `v2b-data`, written only by your server's own key, so a new server starts
+  from it.
 
-- Discord: one pass over each Discord server the bot is in, fetching only what is new since the
-  last pass in its text and announcement channels and their active threads; a thread is a
-  channel of its own, under its parent channel.
-  Not fetched: archived threads, forum and media channels, edits and deletions between passes,
-  and attachment files. A channel the bot may not read is left out and counted as skipped, not
-  as an error. Each pass first asks Discord whether the bot's Message Content
-  Intent is on. If it is, every page is copied as it arrives, even one whose messages carry no
-  text. If it is off, the pass asks for no message, copies none and advances no mirror, stores
-  the servers, channels and threads for the list, counts none as copied, and fails with a
-  message that names the switch and the Developer Portal's Bot page, in the status and, once,
-  in the log; once the intent is switched on the messages are copied, each a first reading
-  with its text and none an edit. If Discord cannot be asked, the pass copies nothing and fails.
-- Granola: one pass over the folders the owner ticked, or over the whole account when it has
-  none, read with the key the owner made in Granola (Settings, Connectors, API keys, Personal
-  notes only). A meeting is the utterance; its notes and its transcript (speaker and time per
-  segment) are its readings, so a changed note or transcript is a new reading, and the people
-  the meeting lists took part. A pass lists each ticked folder for meetings updated since its
-  cursor (an hour back, so a late change is seen), reads each whole, and requests only by GET:
-  nothing is written, marked or sent in Granola. A meeting moved to another folder is stored at
-  its new home and a deleted one as deleted. Granola lists only meetings that have a summary
-  and a transcript, so a meeting is seen once it has both. A key Granola refuses fails the
-  pass and the status names it as the key.
-- Slack: one pass over the conversations the owner ticked, read with the owner's own key. It
-  copies the workspace and its accounts, then each ticked conversation from its cursor: a
-  message and each reply of its thread, as Slack sent them, a reading for every new message and
-  for an edit, a reaction or a deletion the pass sees. A pass reads a conversation again from
-  seven days back, so an edit, a reaction or a deletion of a message is seen while it is that
-  recent. A reply is found by asking, not by re-reading every thread: the history gives a
-  thread's first message with its newest reply and its count, and one search of the thread
-  replies the key can see (`search:read`, once a pass for the workspace) names the threads
-  with a reply newer than the last good search; a thread whose reply the copy lacks, or whose
-  count fell, is read whole again, its first message and its replies, whatever the age of the
-  first message. A quiet conversation costs one history call and reads no thread. Not seen: an
-  edit or a reaction on a message older than seven days, or on a reply, until a new reply makes
-  its thread be read again; a search that fails fails the pass and leaves the search where it was. A file is kept as its name, kind and address; its
-  bytes are not fetched. Nothing ticked copies nothing. A key Slack refuses fails the pass and the status names it as the key.
-- Telegram, as the owner: the sign-in the Mac gives the server (`TELEGRAM_SESSION`) reads the
-  owner's own account with reading methods only: who the account is, its dialogs, and message
-  history and messages by id. The client sends no request that sends a message, marks one read,
+### How often your accounts are copied
+
+The first copy begins a minute after the copying service starts. Each account is copied every
+five minutes. A copy you ask for may start a minute after the last one began, at the soonest.
+
+### What V2B reads on each platform
+
+V2B only reads. Slack and Telegram are read as you, Discord through a bot on the servers you
+chose, and your mailboxes with their passwords. A file a message carries is kept by its name, kind
+and size; its contents are not copied.
+
+- Telegram, as you: the sign-in your Mac gives the server reads your own account with reading
+  methods only. The client sends no request that sends a message, marks one read,
   sets a status, or joins or leaves a chat; its callable methods are a fixed list, and a test fails
-  when one is added. The owner's account is the source, each chat a place (a person's id, `-id`
-  for a basic group, `-100id` for a channel or supergroup) and each message an utterance. A pass copies
-  every ticked chat from its cursor, a page at a time with the cursor committed, one reading per
-  message. Edits and deletions are readings whatever the message's age, as far as Telegram gives
-  them: the pass keeps Telegram's own place in its numbered events (one for the private chats and
-  basic groups together, one for each channel and supergroup) beside the cursors, reads what
-  happened after it, and asks again, by number, for the ticked chats' messages it names; one that
-  now differs is stored as an edit (at its own edit date) and one Telegram answers as gone as a
-  deletion (at the pass's time, since Telegram does not say when). A deletion in the private
-  chats and basic groups names the number alone, and the pass finds the chat from its own tables.
-  Where Telegram no longer replays that far, or refuses the place kept, every message held of the
-  chat is asked for again by number, oldest first, with its progress kept. The pass reads these
-  with reading methods of the same fixed list. A change to a message's reactions carries no numbered event, so it is
-  seen only for a chat's newest 100 copied messages, asked for again on every pass. A chat whose
-  events a pass could not read (it was not ticked, or not listed) is swept the same way when it is
-  back. What it cannot see is a reaction to an older message. A wait
-  Telegram asks for of up to 90 seconds is waited out, three times at most for one request; a
-  longer one ends the pass with the cursors kept, and the next pass
-  resumes. A session Telegram has ended fails the pass with "Telegram refused the sign-in V2B
-  was given (...). Sign in to Telegram again from V2B on your Mac.", which the Mac reads as the one reason to ask for a
-  new sign-in. Reactions are kept as changes; attachment files, pins and topics are not copied.
-- Mail, over IMAP with the mailbox's password: the mailbox is the source (known by its short
-  name), each ticked folder a place and each message an utterance. The server is reached by
-  `EXAMINE`, `UID SEARCH` and `UID FETCH` of `BODY.PEEK` alone, so nothing is stored, marked or
-  flagged on it, and flags (read, starred) are not copied. A folder is copied newest first, a batch
-  to a transaction with the UIDs it placed, so a pass that stops goes on from the UIDs not yet
-  copied. A message shown by two ticked folders (Gmail's labels and All Mail) is one utterance, known
-  by its `Message-ID` (one without is known by its folder and UID) and filed under the folder it
-  was first seen in. A message gone from every ticked folder holding it, or whose folder was
-  remade under a new UIDVALIDITY and does not hold it, is stored as deleted; a folder unticked
-  deletes nothing. The raw kept is the headers and the text parts as received; the other parts are
-  kept by name, kind, size and where on the server they are, never their bytes, and a message
-  larger than 32 MB is kept by its headers alone. Who wrote a message, was sent it (To) or
-  was copied (Cc) is read from its headers; a reply is read from `In-Reply-To` and `References`.
-  Gmail's web client opens a message by its `Message-ID`. The mailbox's business is a link in
-  the database, made by `assign`.
+  when one is added. Edits and deletions are copied whatever a message's age, as far as Telegram
+  gives them. The pass reads these with reading methods of the same fixed list.
+- Slack: the conversations you ticked, with your own key; edits, reactions and deletions are seen
+  for a week.
+- Discord: each text channel and active thread the bot can read; a channel it may not read is
+  left out.
+- Mail: each folder you ticked, read without marking anything read or moving anything.
 
-The service answers on one socket, `/run/v2b/archive.sock`, owned by the archive service's user and
-the group `v2b`, so only the assistant and `root` can connect to it. Each request and each
-answer is one line of JSON: `status` gives every connection, whether it is copied and running,
-when its last pass started and ended, whether it went well and what it copied; `sync` runs one
-connection's pass now, or waits for the one already running, and says what it stored per
-place, or that it was not copied yet; `list` shows what one connection could copy, without copying anything: the source and
-each channel, group, folder or server in it, and whether it is chosen; `reload` reads what is
-wanted and the keys again; `give` takes what is wanted, whole, as the next version of the one
-held, refuses one made from an older version with the one held, and changes nothing when given
-the same again; `wanted_status` answers what is wanted with where every part of it stands. Each
-request is answered only to the callers allowed it: `list`, `reload`, `give` and
-the owner's word as a whole to `root` alone, the agent's reads and writes to the assistant, and
-any other caller is refused in one sentence naming the request. No answer holds a key. Each
-request is one line in the journal, with the caller's user id and whether it went well, never
-what was asked or answered.
+## What the agent may do, and what it asks you first
 
-What the owner wants is one document in the archive service's database, with its version: each
-source (a Slack workspace, a mailbox, the Telegram account, a Discord bot, the Granola account),
-the places ticked in each, and the rest of what he sets. Which business a source or place is about
-is a link in the database, never a part of it. A source's key is not in the database, which a
-query and a copy of it read: each is one line in a file of its own,
-`/var/lib/v2b/archive/keys/<source>.key`, the archive service's user's alone (mode 0600, in a
-directory of 0700). The archive service runs as a user of its own, and the assistant cannot reach
-its state directory, where the keys and the database are: its unit makes that directory
-inaccessible.
-
-A server installed before the database held what is wanted kept it in settings files in
-`/etc/v2b/archive/`. At its first start on a release that reads the database, the archive service
-reads them once into what is wanted and the key files, and names each file it moved and each it
-could not read. The update, as `root`, then removes the moved ones at its next run; one that did
-not read is left where it is and named once in the install log. After the move no settings file is
-read again.
-
-`/etc/v2b/archive/platform-addresses.env` stays, on a test server only: `slack`, `discord` and
-`granola`, each the address of a stand-in for that platform, and `telegram` with `telegram.key`,
-`mail.gmail` and `mail.hosted` with `mail.certificate`, the host and port of a stand-in Telegram
-and of the stand-in mail servers with what each proves itself by, read in place of the platform's
-own. It is read once, when the service starts, and only when `root` owns it and no one else can
-write it; a file refused is said in the journal and the status, and those five platforms copy
-nothing until it is put right. Every face of the status says which platforms a stand-in serves. The reads
-allowed for each platform are the same whatever its address.
-
-Only the service opens the database, holding its lock in `/var/lib/v2b/archive/`, and it writes
-one pass at a time.
-
-A key reaches the server only from the Mac, over its kept connection: `v2b answer`, run as root
-over SSH, takes what is wanted whole with the keys beside it and passes them to the service, which
-alone writes a key's file, tries it, and reports its life in the status the Mac reads back. No
-key is typed on the server, and no command there writes one.
-
-The assistant can run a pass now rather than wait five minutes, through the socket; it asks
-the service, which holds the keys, and never reads them itself.
-
-What each connection has fetched so far is kept in `/var/lib/v2b/archive/`, beside the keys.
-
-| In this repository | On your server |
-|---|---|
-| `units/` | `/etc/systemd/system/` |
-| `claude/managed-settings.json` | `/etc/claude-code/managed-settings.json` |
-| `claude/managed-mcp.json` | `/etc/claude-code/managed-mcp.json` |
-| `claude/commands/` | `/etc/claude-code/.claude/commands/` |
-| `workspace/CLAUDE.md` | `/etc/claude-code/CLAUDE.md` |
-
-All of these are root's: the assistant reads them and cannot change them. Claude Code reads
-`/etc/claude-code/CLAUDE.md` as managed memory and the commands beside it as managed commands.
-`managed-mcp.json` names the one tool server the assistant's sessions load, `v2b mcp`: it runs
-as the `v2b-agent` user and asks the archive service over the same socket as the commands. The
-managed settings allow each of its tools by name, so a call to one runs with no prompt and no
-review. No other server is defined on the host; the owner's claude.ai connections reach the
-assistant beside it, through `allowAllClaudeAiMcps` and an allowlist entry for remote servers.
-
-## The door to the assistant
-
-`v2b-remote-control.service` runs all the time, as the `v2b-agent` user, in `/home/v2b-agent/workspace`:
-it is `claude remote-control`, which lets the Claude app on your phone, desktop or the web
-open the assistant on your server. It restarts five seconds after any stop. It cannot see the
-mirrors' keys (`/etc/v2b` and `/var/lib/v2b/archive` are hidden from it) and what it writes is
-private to it (`UMask=0077`). The rest of the file system is read-only to it but its home, it
-gains no privilege (no sudo), and the kernel's controls are out of its reach; each line in the
-unit file says why it is there. A change to its unit file restarts it on the next deploy.
-
-Claude Code itself is root's, in `/usr/local/lib/claude-code`: root installs it, and
-`v2b-claude-update.timer` updates it once a day, restarting the door only when the version
-moved. Claude Code's own updater is off, so the assistant runs only the copy root installed.
-
-## Seeing what ran
-
-- What changed and who changed it: `git log` in this repository.
-- Whether it was installed: `/var/log/v2b/deploy.log`, one line per event (`installed`,
-  `update failed`, `rolled back`, `rolled back, not running`, `refused signature`, `refused bundle`,
-  `nothing new`). You can also ask the assistant whether the
-  last deploy worked; it can read that file.
-- The release installed: the generation `/usr/local/lib/v2b/current` links to.
-- What the archive service did: one journal, `journalctl -u v2b-archive`, with a line for each
-  pass and its counts, each failure, and each request to the service with the caller's user
-  id. `/usr/local/lib/v2b/bin/v2b status` shows each account and place V2B reads, by its name,
-  where it stands and how far back its copy reaches; the assistant can run it for you.
-- What the assistant was asked and did: `/home/v2b-agent/use-log/`, written by the hooks in
-  `claude/managed-settings.json` from what Claude Code hands each hook, one JSON line per
-  event. `prompt.jsonl` holds each question; `tool.jsonl` each tool call, its input and what it
-  returned or the error, a returned value over 8192 characters, serialised, kept as its first 8192 characters
-  with `truncated: true`; `stop.jsonl` each answer, with the path of the session's
-  transcript. `run` is `session` for a turn from the app or the desk, or the name in
-  `V2B_RUN` for a background run that sets it. The lines of one turn share `prompt_id`.
-- To look for a release now rather than wait: `sudo systemctl start v2b-update.service`.
-
-## From your laptop
-
-V2B Setup is the program you run on your Mac: it sets the server up with you, connects your
-channels and shows what is running, and asks for every key in a hidden window. The same program
-is installed on the server as `/usr/local/lib/v2b/bin/v2b`, which is what the commands above run.
-
-## Review before a change takes effect
-
-Not turned on. Every change is still in this repository's history with the team's name on it, and the
-assistant can explain any of it.
-
-## Test
-
-`deploy/test-hooks` runs each hook's command on sample input and checks the line it writes; it
-needs no network. The archive service's tests are the program's own.
+The agent's settings are part of each version and cannot be changed on your server. Its tools
+that only read, and copying now, run without asking you. The two that change what V2B holds,
+remembering what you said and taking it back, ask you first in the Claude app, each time. The
+agent writes only its own reports and what you ask it to remember, and nothing is ever sent from
+it to any platform.
 
 ## The agent's tools
 
-Installed in `/usr/local/lib/v2b/bin/` for the assistant to run as `v2b-agent`, with no `sudo`; each
-is the program, `/usr/local/lib/v2b/bin/v2b`, or a link to it under the tool's name, and none
-is a service. `v2b sync` and `v2b status` (also reached as `v2b-copy-now` and `v2b-status`) ask the archive service over its socket, `/run/v2b/archive.sock`, and
-name a connection by its name: `telegram`, `discord`, `granola`, `slack-<name>`, `mail-<name>`.
+What the Claude app shows at each of the agent's calls: its tools, and the commands it runs.
 
-| Tool | What it does |
+| Tool | What it does for you |
 |---|---|
-| `v2b-search` | Searches the messages as they are now (edits applied, deletions left out), matching across Cyrillic and Latin and with or without diacritics; narrows by business, platform, source, channel, author and time window; `--around`, `--full`, `--count`. Exit 1 on no hit, 2 on a bad argument. |
-| `v2b-dates` | Turns a phrase (today, last week, this month, last N days, since a weekday, a date or two) into `since=` and `until=` in UTC, its edges local midnights. |
-| `v2b-day`, `v2b-who-took-part`, `v2b-message-history`, `v2b-as-received`, `v2b-what-is-copied`, `v2b-query` | Read what the service holds: a channel's day, who was in an utterance, an utterance's readings, one reading as the platform answered it, every source and place held, a free read-only query. Asked of the service; none opens the database. |
-| `v2b-businesses`, `v2b-people`, `v2b-set-business` | Write the businesses, the people and the business a workspace, channel or chat is about, on the owner's word in chat. |
-| `v2b sync <connection>` | Asks for one pass of that connection now and answers at once, without waiting for it: says the pass is asked for, or that the pass running is the one asked for, or that one began less than a minute ago and nothing is asked for. `v2b status` says how far it is. Exit 0 when a pass is asked for or running, or the connection is not copied yet; 1 on a refused request, a last pass that failed within the minute, an unknown connection or a service it cannot reach (one line naming the socket); 2 on a bad argument. |
-| `v2b status` | The one status, as the dashboard and the assistant's `list` give it: each account and place V2B reads, by the name its platform gives it, where it stands, the business it is under and how far back its copy reaches; this installation's settings, services and release; the businesses. Every time in one form, in the owner's zone. A line before it where the database is not open or the platforms are pointed at stand-ins. `--json` prints the service's per-connection answer, its last line without the transport's `done` (`ok`, `wire` and `connections` in it). |
+| `search_messages` | Searches every copied message, in any script, with or without accents. |
+| `read_thread` | Reads a whole thread, from the message it began with. |
+| `read_conversation` | Reads what was said in a channel, chat or folder over a time. |
+| `messages_by_person` | Gives what a person wrote, across all their accounts. |
+| `what_may_need_you` | Gives the conversations that may wait on you. |
+| `list` | Lists every account and conversation V2B copies, and how each copy stands. |
+| `copy_status` | Says which accounts cannot be copied now, and what you do about it. |
+| `copy_now` | Copies an account now, rather than at its next copy. |
+| `remember_what_you_said` | Remembers what you said: a conversation's business, who an account is, a name. Asks you first. |
+| `what_you_told_v2b` | Gives everything V2B holds of what you told it. |
+| `take_back_what_you_told_v2b` | Takes back something you told V2B. Asks you first. |
+| `v2b-search` | Searches the messages' text for words or a pattern. |
+| `v2b-day` | Gives one channel's day, or a run of days. |
+| `v2b-dates` | Turns words such as "last week" into the dates they mean. |
+| `v2b-who-took-part` | Says who was in a message, and how. |
+| `v2b-message-history` | Gives each change to a message, in order. |
+| `v2b-as-received` | Gives one change to a message as its platform sent it. |
+| `v2b-what-is-copied` | Lists every account and conversation copied. |
+| `v2b-query` | Asks the copy a question in SQL, changing nothing. |
+| `v2b-businesses` | Lists, makes and renames your businesses. |
+| `v2b-people` | Lists the people you named, their accounts and businesses. |
+| `v2b-set-business` | Sets the business a conversation is in. |
+| `v2b-your-accounts` | Lists your own accounts. |
+| `v2b-what-may-need-you` | Gives the conversations that may wait on you. |
+| `v2b-now` | Gives what stands as a conversation starts. |
+| `v2b-status` | Gives how each account's copy stands. |
+| `v2b-copy-now` | Copies an account now. |
+| `v2b-summarize` | Writes the summaries of a day's channels. |
+
+## Where what you told V2B is kept
+
+What you told V2B, the businesses, who each person is, what it should remember, is kept in your
+own private repository on GitHub, `v2b-data`, which only your server's own key writes. A new
+server reads it back, so nothing you taught V2B is lost with a server.
+
+## Seeing what ran
+
+- V2B's page on your Mac shows each service, whether it runs, and each account's copy; `v2b
+  status` in Terminal on your Mac says the same.
+- The agent keeps a record of each question you asked, each tool it called with what the tool
+  answered, and each answer it gave, on your server, beside its own files.
