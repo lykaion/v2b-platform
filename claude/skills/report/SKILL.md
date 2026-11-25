@@ -1,21 +1,22 @@
 ---
 name: report
-description: Gives you a report or an update that is useful to you, and saves it. For when you ask for a report, an update, the news or a catch-up on everything, or run /report.
+description: Gives you a report on your businesses, each point linked to the message it came from, and remembers what it told you, so the next report leaves that out. Name a period or a business to keep to it.
 ---
 
 # Reports
 
 A report exists so the owner can stop reading his channels for a while and still not miss the
 moment he is needed, and it hands him what he has not been shown. A plain answer to a question is
-not a report; you judge which he asked for.
+not a report; you judge which he asked for. Where he ran `/report` and named a period or a
+business, keep to it: $ARGUMENTS
 
-It opens with what needs him, in this order:
+It opens with what needs him, in this order, each part headed as below:
 
-1. **His to-dos** (`todos/`, the open ones the briefing lists): what he confirmed needs him. Look
+1. **Your to-dos** (`todos/`, the open ones the briefing lists): what he confirmed needs him. Look
    each up afresh in the copy and say where it stands now, oldest first, with how long each has
    waited: an item that has waited nine days reads differently from one raised this morning. A
    to-do the copy shows settled is said as settled; he is the one to close it.
-2. **The candidates due** (`candidates/`, the ones the briefing lists as due): what might need him,
+2. **What may soon need you** (`candidates/`, the ones the briefing lists as due): what might need him,
    higher tier and newer first. Look each up afresh; one the copy shows settled is left out. A
    candidate not due is not shown, however it reads: it was shown and he let it be.
 3. **What is new**: what no saved report has used. The briefing counts the summaries no report used;
@@ -44,18 +45,20 @@ in the way that fits it.
 
 ## Saving it
 
-Save every report as two files with the Write tool, the second first. `reports/<date>-<time>.md`,
-such as `reports/2026-11-19-0930.md`, holds the report alone, as he was handed it: it is the file he
-opens. Beside it, `reports/<date>-<time>.meta`, such as `reports/2026-11-19-0930.meta`, holds the
-lines the next report and the ledger read:
+He reads the report in your answer. Save it too, as one file with the Write tool,
+`reports/<date>-<time>.md`, such as `reports/2026-11-19-0930.md`: the report as he was handed it,
+then, at its end, the lines the next report and the ledger read, inside one comment, which a
+viewer of the file does not show:
 
 ```
+<!--
 at: 2026-11-19 09:30
 from: 2026-11-18 09:30
 to: 2026-11-19 09:30
 showed: po-2231, oven-repair
 told: slack/T123/C456/1731.0002
 used: summaries/2026-11-18/slack-T123-C456, slack/T123/C456/1731.0001
+-->
 ```
 
 - `at` is when you gave it, `from` and `to` the period it covers, in his time zone.
@@ -67,7 +70,8 @@ used: summaries/2026-11-18/slack-T123-C456, slack/T123/C456/1731.0001
 - `used` is every summary (its path without `.md`) and every message (its reference, as the tools
   print it) a point of the report rests on. What a report used is no longer new to the next.
 - One value per line also works: `showed: po-2231` twice.
-- A report saved earlier with these lines at the top of its own file still reads; save new ones as
-  two files.
+- Write no other file for a report. Reports saved earlier with these lines at the top of the
+  report's file, or in a `.meta` file beside it, still read.
 
-He asks for nothing of this: it is how the next report knows what he has seen.
+He asks for nothing of this, and you do not tell him of it: it is how the next report knows what
+he has seen.

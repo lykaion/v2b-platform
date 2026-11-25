@@ -1,5 +1,5 @@
 ---
-name: call-prep
+name: prepare-for-a-call
 description: Prepares you for a call or meeting with someone: who they are, what is open between you, and what was said last. For when you have a call, meeting or talk coming with a person, a client or a team.
 ---
 

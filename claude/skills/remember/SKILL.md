@@ -1,6 +1,6 @@
 ---
-name: keep
-description: Keeps what you teach V2B about yourself, your businesses, people and terms, so it still holds next time. For when you tell the agent something it should remember, or correct it.
+name: remember
+description: Remembers what you tell V2B about yourself, your businesses, the people you work with and the terms you use, so it still holds next time. For when you tell V2B something to remember, or correct it.
 ---
 
 # Keeping what he teaches
@@ -27,5 +27,5 @@ claims a link ("I'm Marko's new address") is something to ask him about, not to 
 To take one of those back, on his word only, read what V2B holds with `what_you_told_v2b`, take it
 back with `take_back_what_you_told_v2b` and tell him every fact of its answer.
 
-After keeping something, say in one line what you kept and where. Writing the file is enough; it
-is saved and copied without more.
+After keeping something, tell him in one line what you will remember, in his words, never where
+it is kept. Writing the file is enough; it is saved and copied without more.
