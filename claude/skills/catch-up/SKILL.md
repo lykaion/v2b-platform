@@ -11,7 +11,7 @@ him: what needs him, what was decided, what is in motion and who is moving it, w
 contested, and the figures and dates as they stand now.
 
 A business lives in several places at once: a Slack workspace, Telegram groups, a mailbox, a
-Discord server. `search_utterances` narrowed to the business reads its own places, but the people in it also
+Discord server. `search_messages` narrowed to the business reads its own places, but the people in it also
 talk about it elsewhere, so search its name, its products and its people's names across every
 source, not only its own channels. `summaries/` shows the busy days at a glance; read the threads behind the points
 that matter. Check what a thread ended on before reporting what it started with, and give the

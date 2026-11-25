@@ -251,14 +251,14 @@ needs no network. The archive service's tests are the program's own.
 
 Installed in `/usr/local/lib/v2b/bin/` for the assistant to run as `v2b-agent`, with no `sudo`; each
 is the program, `/usr/local/lib/v2b/bin/v2b`, or a link to it under the tool's name, and none
-is a service. `v2b sync` and `v2b status` (also reached as `v2b-sync` and `v2b-status`) ask the archive service over its socket, `/run/v2b/archive.sock`, and
+is a service. `v2b sync` and `v2b status` (also reached as `v2b-copy-now` and `v2b-status`) ask the archive service over its socket, `/run/v2b/archive.sock`, and
 name a connection by its name: `telegram`, `discord`, `granola`, `slack-<name>`, `mail-<name>`.
 
 | Tool | What it does |
 |---|---|
-| `v2b-grep` | Searches the messages as they are now (edits applied, deletions left out), matching across Cyrillic and Latin and with or without diacritics; narrows by business, platform, source, channel, author and time window; `--around`, `--full`, `--count`. Exit 1 on no hit, 2 on a bad argument. |
+| `v2b-search` | Searches the messages as they are now (edits applied, deletions left out), matching across Cyrillic and Latin and with or without diacritics; narrows by business, platform, source, channel, author and time window; `--around`, `--full`, `--count`. Exit 1 on no hit, 2 on a bad argument. |
 | `v2b-dates` | Turns a phrase (today, last week, this month, last N days, since a weekday, a date or two) into `since=` and `until=` in UTC, its edges local midnights. |
-| `v2b-day`, `v2b-who`, `v2b-history`, `v2b-raw`, `v2b-held`, `v2b-query` | Read what the service holds: a channel's day, who was in an utterance, an utterance's readings, one reading as the platform answered it, every source and place held, a free read-only query. Asked of the service; none opens the database. |
-| `v2b-business`, `v2b-people`, `v2b-assign` | Write the businesses, the people and the business a workspace, channel or chat is about, on the owner's word in chat. |
+| `v2b-day`, `v2b-who-took-part`, `v2b-message-history`, `v2b-as-received`, `v2b-what-is-copied`, `v2b-query` | Read what the service holds: a channel's day, who was in an utterance, an utterance's readings, one reading as the platform answered it, every source and place held, a free read-only query. Asked of the service; none opens the database. |
+| `v2b-businesses`, `v2b-people`, `v2b-set-business` | Write the businesses, the people and the business a workspace, channel or chat is about, on the owner's word in chat. |
 | `v2b sync <connection>` | Asks for one pass of that connection now and answers at once, without waiting for it: says the pass is asked for, or that the pass running is the one asked for, or that one began less than a minute ago and nothing is asked for. `v2b status` says how far it is. Exit 0 when a pass is asked for or running, or the connection is not copied yet; 1 on a refused request, a last pass that failed within the minute, an unknown connection or a service it cannot reach (one line naming the socket); 2 on a bad argument. |
 | `v2b status` | The one status, as the dashboard and the assistant's `list` give it: each account and place V2B reads, by the name its platform gives it, where it stands, the business it is under and how far back its copy reaches; this installation's settings, services and release; the businesses. Every time in one form, in the owner's zone. A line before it where the database is not open or the platforms are pointed at stand-ins. `--json` prints the service's per-connection answer, its last line without the transport's `done` (`ok`, `wire` and `connections` in it). |
