@@ -109,6 +109,6 @@ server reads it back, so nothing you taught V2B is lost with a server.
 ## Seeing what ran
 
 - V2B's page on your Mac shows each service, whether it runs, and each account's copy; `v2b
-  status` in Terminal on your Mac says the same.
+  status`, typed in a new Terminal window on your Mac, says the same.
 - The agent keeps a record of each question you asked, each tool it called with what the tool
   answered, and each answer it gave, on your server, beside its own files.
