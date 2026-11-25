@@ -86,9 +86,9 @@ is how it reads the platforms.
   bytes are not fetched. Nothing ticked copies nothing. A key Slack refuses fails the pass and the status names it as the key.
 - Telegram, as the owner: the sign-in the Mac gives the server (`TELEGRAM_SESSION`) reads the
   owner's own account with reading methods only: who the account is, its dialogs, and message
-  history and messages by id. Nothing is sent, nothing is marked read, no status is set, and no
-  chat is joined or left; the client's callable methods are a fixed list, and a test fails when
-  one is added. The owner's account is the source, each chat a place (a person's id, `-id`
+  history and messages by id. The client sends no request that sends a message, marks one read,
+  sets a status, or joins or leaves a chat; its callable methods are a fixed list, and a test fails
+  when one is added. The owner's account is the source, each chat a place (a person's id, `-id`
   for a basic group, `-100id` for a channel or supergroup) and each message an utterance. A pass copies
   every ticked chat from its cursor, a page at a time with the cursor committed, one reading per
   message. Edits and deletions are readings whatever the message's age, as far as Telegram gives
@@ -99,9 +99,8 @@ is how it reads the platforms.
   deletion (at the pass's time, since Telegram does not say when). A deletion in the private
   chats and basic groups names the number alone, and the pass finds the chat from its own tables.
   Where Telegram no longer replays that far, or refuses the place kept, every message held of the
-  chat is asked for again by number, oldest first, with its progress kept. That takes three more
-  reading methods (`updates.getState`, `updates.getDifference`, `updates.getChannelDifference`),
-  in the same fixed list. A change to a message's reactions carries no numbered event, so it is
+  chat is asked for again by number, oldest first, with its progress kept. The pass reads these
+  with reading methods of the same fixed list. A change to a message's reactions carries no numbered event, so it is
   seen only for a chat's newest 100 copied messages, asked for again on every pass. A chat whose
   events a pass could not read (it was not ticked, or not listed) is swept the same way when it is
   back. What it cannot see is a reaction to an older message. A wait
