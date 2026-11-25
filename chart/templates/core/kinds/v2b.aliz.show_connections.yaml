@@ -246,6 +246,12 @@ spec:
                 required:
                 - kind
                 type: object
+              listedAt:
+                description: |-
+                  ListedAt is when the account's places were last listed; absent before the first listing. A
+                  listing read again moves it where PlacesListed stays as it was.
+                format: date-time
+                type: string
               observedGeneration:
                 format: int64
                 type: integer
