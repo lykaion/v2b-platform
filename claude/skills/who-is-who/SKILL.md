@@ -14,7 +14,7 @@ in both scripts and without diacritics, the username, the address's local part, 
 or role, the same matter discussed in two places at the same time. Say how sure you are and why
 ("the same person, I think: the Telegram account signs as Stefan and writes about the same
 release the same day"), and offer to remember that the two accounts are one person; record it
-with `remember_what_you_said` only once he confirms.
+with `remember_what_you_said` only once they confirm.
 
-What he usually wants to know: their role and business, what they are working on for him now,
-what they last said to him or about him, and anything they are waiting on from him.
+What they usually want to know: their role and business, what they are working on for them now,
+what they last said to them or about them, and anything they are waiting on from them.

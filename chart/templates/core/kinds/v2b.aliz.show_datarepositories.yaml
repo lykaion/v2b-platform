@@ -147,8 +147,8 @@ spec:
                   the Mac service to register.
                 type: string
               wordUnread:
-                description: WordUnread is why the user's word in the repository
-                  could not be read, if so.
+                description: WordUnread is why the user's word in the repository could
+                  not be read, if so.
                 type: string
               wordVersion:
                 description: |-

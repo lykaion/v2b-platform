@@ -5,9 +5,9 @@ description: Catches you up on one business, project or deal you have not follow
 
 # Catching up on a business
 
-He asks this when he is about to re-enter something: a call, a decision, a conversation with a
+They ask this when they are about to re-enter something: a call, a decision, a conversation with a
 partner. What helps is where it stands now and how it got there, in the order that matters to
-him: what needs him, what was decided, what is in motion and who is moving it, what is stuck or
+them: what needs them, what was decided, what is in motion and who is moving it, what is stuck or
 contested, and the figures and dates as they stand now.
 
 A business lives in several places at once: a Slack workspace, Telegram groups, a mailbox, a
@@ -19,4 +19,4 @@ current text of an edited message.
 
 Write it as a synthesis rather than a list of messages: say where it comes from and link the
 latest significant message in each source you drew on, plus the one message behind any figure,
-date or decision he might repeat to someone.
+date or decision they might repeat to someone.
