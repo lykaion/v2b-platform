@@ -1,5 +1,18 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^mcp__([^v]|v[^2]|v2[^b]|v2b[^_]|v2b_[^_])",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/local/lib/v2b/bin/v2b agent only-reads --log /home/v2b-agent/use-log/tool.jsonl",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
