@@ -146,7 +146,7 @@ spec:
                 format: int64
                 type: integer
               signInAddress:
-                description: SignInAddress is the address the owner opens, set only
+                description: SignInAddress is the address the user opens, set only
                   while a code is awaited.
                 type: string
               signInAsked:

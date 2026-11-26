@@ -6,7 +6,7 @@ description: Works out who a person is across platforms and what they do for you
 # Who a person is
 
 One person often has a different name on each platform: a full name in Slack, a first name or
-a nickname in Cyrillic on Telegram, an address in mail. The briefing lists the people the owner
+a nickname in Cyrillic on Telegram, an address in mail. The briefing lists the people the user
 declared with where their accounts are; `messages_by_person` reads through every account of theirs.
 
 For anyone not linked yet, look for the same person under other names: the variants of the name

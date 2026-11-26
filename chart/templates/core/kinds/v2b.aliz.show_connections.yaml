@@ -313,7 +313,7 @@ spec:
                 items:
                   description: |-
                     ShownThere is what V2B shows of itself on an account of a platform while it holds a key there:
-                    the trace, what it is in the owner's words, and where he ends it at the platform.
+                    the trace, what it is in the user's words, and where he ends it at the platform.
                   properties:
                     end_at:
                       type: string
