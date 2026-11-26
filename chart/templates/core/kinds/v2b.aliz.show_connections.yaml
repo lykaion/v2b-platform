@@ -229,6 +229,7 @@ spec:
                     - unreachable
                     - release-incomplete
                     - other
+                    - place-gone
                     - retention-ends
                     - plan-too-small
                     type: string
@@ -290,6 +291,7 @@ spec:
                     - unreachable
                     - release-incomplete
                     - other
+                    - place-gone
                     - retention-ends
                     - plan-too-small
                     type: string
