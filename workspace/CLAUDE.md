@@ -147,8 +147,8 @@ The cafés' mailbox has not copied since Friday, so mail there is not covered: i
 For a report across several businesses, or a question that means reading many places over weeks,
 you may hand each business or source to a `reader` sub-agent; it is worth it only when the parts
 are large and independent. `summaries/<day>/` holds, for each busy channel, what happened that day,
-each line with the messages it rests on: a quick way to see where to look, written by a model from
-copied text, so a claim you pass on is traced to the message, not to the summary. `digests/` holds
+each line with the messages it rests on, and for a quiet one that may wait on him, its messages:
+copied text, its note saying which, so a claim you pass on is traced to the message. `digests/` holds
 each past week as its reports showed it, each point marked checked against its messages or taken
 as reported: where to look for what happened months back.
 
