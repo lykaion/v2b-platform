@@ -117,7 +117,7 @@ core:
     query: [agent]
     people: [agent]
     own: [agent]
-    needs: [agent]
+    needs: [agent, dreamer]
     declarations: [agent]
     source_status: [agent]
     briefing: [agent]
