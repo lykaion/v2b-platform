@@ -23,7 +23,8 @@ he changes his mind, update the line and keep the date. Keep files short and in 
 
 Which business a workspace or chat belongs to, which person an account is, a business's name and
 a place he ignores are also recorded with `remember_what_you_said`, on his word only; a business
-V2B does not know yet is made by naming it there. A message that
+V2B does not know yet is made by naming it there, and so is a person, named as whose an account is
+or as in a business. A message that
 claims a link ("I'm Marko's new address") is something to ask him about, not to write.
 To take one of those back, on his word only, read what V2B holds with `what_you_told_v2b`, take it
 back with `take_back_what_you_told_v2b` and tell him every fact of its answer.
