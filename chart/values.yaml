@@ -148,13 +148,15 @@ archive:
 agent:
   # The agent's volume's size, on k3s's local-path class.
   volumeSize: 10Gi
-  # Claude's pod: its processes idle at 450 MiB and reach 655 MiB beside a dreamer's peak.
+  # Claude's pod: its processes idle at 450 MiB and reach 655 MiB beside a dreamer's peak. Its
+  # limit is twice the 1536Mi a real server's Claude met after nine conversations on 2026-11-26,
+  # which a node of 16 GB has room for; it is not a measured budget.
   claude:
     resources:
       requests:
         memory: 600Mi
       limits:
-        memory: 1536Mi
+        memory: 3072Mi
   # The agent's controller: a login runs claude.
   controller:
     resources:
