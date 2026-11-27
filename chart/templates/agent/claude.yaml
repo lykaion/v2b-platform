@@ -60,4 +60,5 @@ spec:
           configMap:
             name: {{ include "v2b.agentSettings.name" . }}
         - name: tmp
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: {{ .Values.agent.claude.tmpSize }}

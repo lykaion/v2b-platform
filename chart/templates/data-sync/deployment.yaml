@@ -39,6 +39,14 @@ spec:
         - name: V2B_GITHUB_HOST_KEY
           value: {{ $github.hostKey | quote }}
         {{- end }}
+        # Fails once the loop's mark is older than internal/alive's Window, 30 minutes.
+        livenessProbe:
+          exec:
+            command: [v2b, data-sync, alive]
+          periodSeconds: 60
+          timeoutSeconds: 10
+        resources:
+          {{- toYaml .Values.dataSync.resources | nindent 10 }}
         securityContext:
           {{- include "v2b.securityContext" (list . "container") | nindent 10 }}
         volumeMounts:
@@ -57,4 +65,5 @@ spec:
           persistentVolumeClaim:
             claimName: data-sync
         - name: tmp
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: {{ .Values.dataSync.tmpSize }}

@@ -49,14 +49,22 @@ spec:
           value: {{ include "v2b.timezone" . | quote }}
         ports:
           {{- include "v2b.archive.port" . | nindent 10 }}
+        # Readiness writes to the database (internal/archive, notReady) and waits for it at most 5 s:
+        # one probe every 30 s, failing the pod on two in a row. Liveness answers while the process
+        # serves.
         readinessProbe:
           httpGet:
             path: /readyz
             port: api
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 2
         livenessProbe:
           httpGet:
             path: /healthz
             port: api
+        resources:
+          {{- toYaml .Values.archive.resources | nindent 10 }}
         securityContext:
           {{- include "v2b.securityContext" (list . "container") | nindent 10 }}
           readOnlyRootFilesystem: true
@@ -78,7 +86,8 @@ spec:
           persistentVolumeClaim:
             claimName: archive-data
         - name: tmp
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: {{ .Values.archive.tmpSize }}
         {{- with $addresses }}
         - name: platform-addresses
           configMap:

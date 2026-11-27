@@ -61,7 +61,8 @@ spec:
     {{- include "v2b.archive.token" (list $root "volume") | nindent 4 }}
     {{- end }}
     - name: tmp
-      emptyDir: {}
+      emptyDir:
+        sizeLimit: {{ $root.Values.dreamers.tmpSize }}
     - name: settings
       configMap:
         name: {{ include "v2b.agentSettings.name" $root }}

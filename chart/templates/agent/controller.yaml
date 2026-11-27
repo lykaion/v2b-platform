@@ -37,6 +37,12 @@ spec:
             value: {{ include "v2b.agentSettings.name" . | quote }}
           - name: V2B_CLAUDE_DEPLOYMENT
             value: {{ include "v2b.claude.name" . | quote }}
+        # Fails once the loop's mark is older than internal/alive's Window, 30 minutes.
+        livenessProbe:
+          exec:
+            command: [v2b, agent, alive]
+          periodSeconds: 60
+          timeoutSeconds: 10
         resources:
           {{- toYaml .Values.agent.controller.resources | nindent 10 }}
         securityContext:
@@ -50,4 +56,5 @@ spec:
         {{- include "v2b.workspace.volume" . | nindent 8 }}
         {{- include "v2b.cluster.token" (list . "volume") | nindent 8 }}
         - name: tmp
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: {{ .Values.agent.controller.tmpSize }}

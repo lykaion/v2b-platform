@@ -139,6 +139,21 @@ core:
 archive:
   # The archive's volume's size.
   storage: 10Gi
+  # Measured on a local k3s on 2026-11-27, the cgroup read every 2 s: at rest on a small archive 31 MiB, 1m CPU.
+  # On the sized archive (1,448 MB, scripts/sized-archive): through its start, a pass of all five connections
+  # and four searches, anonymous memory at most 58 MiB, CPU up to 1,177m in a pass and 12m at rest; the
+  # cgroup's whole was 1.1 GiB, nearly all the database's page cache, which the kernel reclaims at the limit.
+  # The request is four times the anonymous peak with room for the cache; the limit is 17 times it, caching
+  # about two thirds of a database the sized one's size. No CPU limit: a pass's burst is the copy's speed.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  # The archive's /tmp: SQLite's temporary files, for a sort or an index too large for memory. Empty
+  # through the same measurement; the cap is the room a sort over a large archive may need.
+  tmpSize: 2Gi
   # The stand-in platforms' addresses, rendered only beside core.standinPlatforms: one line of the
   # archive's platform-addresses.env each, key to value. The keys are those the model gives: slack,
   # discord and granola, each an http or https address; telegram (host:port) with telegram.key;
@@ -157,6 +172,9 @@ agent:
         memory: 600Mi
       limits:
         memory: 3072Mi
+    # Claude's /tmp: Claude Code's temporary files. The scripted claude on a local k3s leaves it empty and
+    # the real one's was not measured, so the cap is wide.
+    tmpSize: 1Gi
   # The agent's controller: a login runs claude.
   controller:
     resources:
@@ -164,8 +182,22 @@ agent:
         memory: 64Mi
       limits:
         memory: 512Mi
+    # The controller's /tmp: its claude's home for a login, and the loop's mark; 4 KiB on a local k3s.
+    tmpSize: 256Mi
 
 dataSync:
+  # Measured on a local k3s on 2026-11-27, the cgroup read every 2 s: at rest 16 MiB and 1m CPU; through
+  # a pass that committed and pushed a 2.7 MB file to the stand-in GitHub, at most 39 MiB (anonymous 28 MiB)
+  # and 50m CPU. The request is the peak with room; the limit, 13 times it, leaves git room on a
+  # repository larger than the stand-in's. No CPU limit.
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 512Mi
+  # Data sync's /tmp: git's index of a commit made, and the loop's mark; 4 KiB on a local k3s.
+  tmpSize: 256Mi
   # The stand-in GitHub, set only on a local k3s with the stand-ins: its SSH address (host:port) and its
   # host key in authorized_keys form. Empty in every release; an address with no host key fails the render.
   standinGitHub:
@@ -181,6 +213,9 @@ release:
   devRegistry: ""
 
 dreamers:
+  # Each dreamer's /tmp: its claude's configuration and temporary files, not measured with the real
+  # Claude Code, so the cap is wide.
+  tmpSize: 512Mi
   # Each dreamer's CronJob schedule, in the server's time zone.
   schedules:
     summaries: "30 3 * * *"
