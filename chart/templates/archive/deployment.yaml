@@ -49,15 +49,16 @@ spec:
           value: {{ include "v2b.timezone" . | quote }}
         ports:
           {{- include "v2b.archive.port" . | nindent 10 }}
-        # Readiness writes to the database (internal/archive, notReady) and waits for it at most 5 s:
-        # one probe every 30 s, failing the pod on two in a row. Liveness answers while the process
-        # serves.
+        # Readiness writes to the database (internal/archive, notReady), at most once every 10 s, and
+        # fails when the write fails; a write waiting out another writer's lock is not a failure. The
+        # probe's 15 s timeout is past that wait, so its answer comes back. One probe every 30 s,
+        # failing the pod on two in a row. Liveness answers while the process serves.
         readinessProbe:
           httpGet:
             path: /readyz
             port: api
           periodSeconds: 30
-          timeoutSeconds: 10
+          timeoutSeconds: 15
           failureThreshold: 2
         livenessProbe:
           httpGet:
