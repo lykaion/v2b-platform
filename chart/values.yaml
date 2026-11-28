@@ -165,7 +165,8 @@ agent:
   volumeSize: 10Gi
   # Claude's pod: its processes idle at 450 MiB and reach 655 MiB beside a dreamer's peak. Its
   # limit is twice the 1536Mi a real server's Claude met after nine conversations on 2026-11-26,
-  # which a node of 16 GB has room for; it is not a measured budget.
+  # which a node of 8 GB has room for: the node at rest held 2,696 Mi on a local k3s on 2026-11-26,
+  # leaving about 5 GiB; it is not a measured budget.
   claude:
     resources:
       requests:
