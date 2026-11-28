@@ -1,9 +1,12 @@
-{{- /* The archive's volume: its database and its kept keys, mounted by the archive's one pod alone. */ -}}
+{{- /* The archive's volume: its database and its kept keys, mounted by the archive's one pod alone.
+Kept on uninstall, since losing it loses every message copied and every key the user gave. */ -}}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: archive-data
   namespace: v2b-archive
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   accessModes: [ReadWriteOnce]
   resources:
