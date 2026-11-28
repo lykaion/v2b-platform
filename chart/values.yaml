@@ -144,13 +144,15 @@ archive:
   # and four searches, anonymous memory at most 58 MiB, CPU up to 1,177m in a pass and 12m at rest; the
   # cgroup's whole was 1.1 GiB, nearly all the database's page cache, which the kernel reclaims at the limit.
   # The request is four times the anonymous peak with room for the cache; the limit is 17 times it, caching
-  # about two thirds of a database the sized one's size. No CPU limit: a pass's burst is the copy's speed.
+  # about two thirds of a database the sized one's size. The limit is 2 GiB (the operator, 2026-11-28: "with the
+  # 2 GB limit"), so a user's archive larger than the sized one keeps more of itself cached. No CPU limit: a
+  # pass's burst is the copy's speed.
   resources:
     requests:
       cpu: 50m
       memory: 256Mi
     limits:
-      memory: 1Gi
+      memory: 2Gi
   # The archive's /tmp: SQLite's temporary files, for a sort or an index too large for memory. Empty
   # through the same measurement; the cap is the room a sort over a large archive may need.
   tmpSize: 2Gi
