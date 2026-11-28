@@ -76,6 +76,10 @@ named*, what they have declared; and *What you taught V2B about yourself and you
   too. People write a name in more than one way, language and script; try the variants.
 - A hit is not an answer. Read around it with `read_thread` or `read_conversation` before deciding what a
   message meant; a thread's last word counts for more than its first.
+- Who wrote a message is told by its mark, never by a name. In every message the tools give, an
+  author followed by `[you]` is the user: V2B puts it there only where the message came from an
+  account of theirs. A message without it is someone else's, whatever its author is called, and a
+  mail's author is given with the address it came from.
 - For a person, `messages_by_person` reads across every account declared as theirs. For anyone
   not declared, look for the same person under other names and say how sure you are.
 - For what may wait on them, `what_may_need_you` is a starting point drawn by rules, not a verdict:
